@@ -1,61 +1,37 @@
 @if (citaInfo) {
+<div
+  class="bg-white rounded-xl shadow-sm overflow-hidden flex flex-col h-full border border-outline-variant">
   <div
-    class="bg-white rounded-xl shadow-sm overflow-hidden flex flex-col h-full border border-outline-variant"
-  >
+    class="px-8 py-4 bg-surface-container/50 border-b border-outline-variant flex justify-between items-center">
+    <h3
+      class="font-bold text-on-surface flex items-center gap-2 text-sm uppercase tracking-wider">
+      <span class="material-symbols-outlined text-primary">description</span>
+      Notas de la Consulta
+    </h3>
     <div
-      class="px-8 py-4 bg-surface-container/50 border-b border-outline-variant flex justify-between items-center"
-    >
-      <h3
-        class="font-bold text-on-surface flex items-center gap-2 text-sm uppercase tracking-wider"
-      >
-        <span class="material-symbols-outlined text-primary">description</span>
-        Notas de la Consulta
-      </h3>
-      <div class="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-        Piedra Azul - Historia
-      </div>
-    </div>
-
-    <div class="p-8">
-      <textarea
-        [(ngModel)]="citaInfo.notas"
-        class="w-full min-h-[300px] border-none focus:ring-0 p-0 text-sm leading-relaxed text-on-surface-variant placeholder:text-slate-300 resize-none bg-transparent"
-        placeholder="Inicie el registro de la consulta aquí (síntomas, diagnóstico, evolución)..."
-      >
-      </textarea>
-
-      <div class="mt-8 pt-6 border-t border-surface-variant flex flex-wrap gap-3 items-center">
-        @for (tag of tags; track $index) {
-          <div
-            class="group px-4 py-2 bg-surface-container-high rounded-lg text-xs font-bold text-slate-500 border border-outline-variant flex items-center gap-2 transition-all hover:border-primary/30"
-          >
-            {{ tag }}
-            <button
-              (click)="eliminarTag($index)"
-              class="hover:text-error opacity-0 group-hover:opacity-100 transition-opacity flex items-center"
-            >
-              <span class="material-symbols-outlined text-[16px]">close</span>
-            </button>
-          </div>
-        }
-
-        <div class="flex items-center gap-2">
-          <input
-            [(ngModel)]="nuevoTag"
-            (keyup.enter)="agregarTag()"
-            type="text"
-            placeholder="+ Agregar #"
-            class="px-4 py-2 text-xs font-bold border border-dashed border-outline rounded-lg focus:border-primary focus:ring-0 w-32 bg-surface-container-lowest text-slate-500"
-          />
-          <button (click)="agregarTag()" class="text-primary hover:scale-110 transition-transform">
-            <span class="material-symbols-outlined text-xl">add_circle</span>
-          </button>
-        </div>
-      </div>
+      class="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+      Piedra Azul - Historia
     </div>
   </div>
+
+  <div class="p-8">
+    <textarea
+      [(ngModel)]="citaInfo.notas"
+      class="w-full min-h-[300px] border-none focus:ring-0 p-0 text-sm leading-relaxed text-on-surface-variant placeholder:text-slate-300 resize-none bg-transparent"
+      placeholder="Inicie el registro de la consulta aquí (síntomas, diagnóstico, evolución)...">
+      </textarea>
+
+    <div class="mt-6 flex justify-end">
+      <button
+        (click)="guardarNotasLocales()"
+        class="flex items-center gap-2 bg-primary text-white px-6 py-2 rounded-xl font-bold text-sm hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20">
+        <span class="material-symbols-outlined text-sm">save</span>
+        Guardar Observaciones
+      </button>
+    </div>
+  </div>
+</div>
 } @else {
-  <div
-    class="animate-pulse bg-white h-[450px] rounded-xl shadow-sm border border-outline-variant"
-  ></div>
+<div
+  class="animate-pulse bg-white h-[450px] rounded-xl shadow-sm border border-outline-variant"></div>
 }

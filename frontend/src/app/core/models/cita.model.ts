@@ -10,7 +10,8 @@ export interface Cita {
   notas?: string;
 
   paciente?: {
-    nombres: string;
+    nombre?: string;
+    nombres?: string;
     apellidos: string;
     documento: string;
     fotoUrl?: string;

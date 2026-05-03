@@ -12,6 +12,9 @@ import { IsOptional, IsEnum } from 'class-validator';
 
 export class ConsultarCitasDto {
   @IsOptional()
+  id?: string; // <--- Añade esto
+
+  @IsOptional()
   pacienteId?: string;
 
   @IsOptional()

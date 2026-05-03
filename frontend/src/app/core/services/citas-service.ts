@@ -53,4 +53,39 @@ export class CitasService {
   obtenerCitasPorPaciente(pacienteId: string): Observable<Cita[]> {
     return this.http.get<Cita[]>(`${this.api}/paciente/${pacienteId}`);
   }
+
+  obtenerCitaPorId(id: string): Observable<Cita> {
+    return this.http.get<Cita>(`${this.api}/${id}`);
+  }
+
+  // En citas.service.ts
+
+  actualizarEstadoCita(id: string, estado: string): Observable<any> {
+    let endpoint = '';
+
+    switch (estado) {
+      case 'FINALIZADA':
+        endpoint = 'finalizar';
+        break;
+      case 'CANCELADA':
+        endpoint = 'cancelar';
+        break;
+      case 'NO_ASISTIO':
+        endpoint = 'no-asistio';
+        break;
+      case 'REAGENDADA':
+        endpoint = 'reagendar';
+        break;
+      default:
+        console.error('Estado no soportado:', estado);
+        return new Observable((sub) => sub.error('Estado no reconocido'));
+    }
+
+    // Se envía un objeto vacío {} como Body para evitar errores de protocolo en el PATCH
+    return this.http.patch(`${this.api}/${id}/${endpoint}`, {});
+  }
+
+  actualizarNotasCita(id: string, data: { notas?: string; tags?: string }): Observable<any> {
+    return this.http.patch(`${this.api}/${id}`, data);
+  }
 }

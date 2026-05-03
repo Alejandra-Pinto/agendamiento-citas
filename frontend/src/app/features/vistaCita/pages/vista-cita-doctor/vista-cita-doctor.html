@@ -1,29 +1,39 @@
 <div class="max-w-[1400px] mx-auto p-6 space-y-8">
-  <app-agendamiento-estados-citas [estadoActual]="cita?.estado"></app-agendamiento-estados-citas>
 
-  <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-    <div class="lg:col-span-3 space-y-6">
-      <app-paciente-perfil-card [pacienteInfo]="cita?.paciente"></app-paciente-perfil-card>
+  <!-- 1. CABECERA Y ESTADOS -->
+  <app-agendamiento-estados-citas
+    [estadoActual]="cita?.estado"
+    (alCambiarEstado)="onEstadoChanged($event)">
+  </app-agendamiento-estados-citas>
 
-      <div class="bg-[#1e4cd6] p-6 rounded-2xl shadow-lg text-white relative overflow-hidden">
-        <p class="text-[10px] font-black uppercase tracking-widest opacity-60 mb-2">
-          Nota del Sistema
-        </p>
-        <p class="font-medium text-sm leading-relaxed relative z-10">
-          Verificar historial de alergias antes de prescribir medicamentos.
-        </p>
-        <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-white/10 rounded-full"></div>
-      </div>
+  <!-- 2. FILA DE 3 TARJETAS (Ancho completo) -->
+  <app-agendamiento-info-medico
+    [citaInfo]="cita">
+  </app-agendamiento-info-medico>
+
+  <!-- 3. NOTA DEL SISTEMA (Con margen extra para separar) -->
+  <div
+    class="bg-[#1e4cd6] p-5 rounded-xl shadow-md text-white flex items-center gap-4 relative overflow-hidden mb-4">
+    <div class="bg-white/20 p-2 rounded-lg relative z-10">
+      <span class="material-symbols-outlined">priority_high</span>
     </div>
-
-    <div class="lg:col-span-9 space-y-6">
-      <div>
-        <app-agendamiento-info-medico [citaInfo]="cita"></app-agendamiento-info-medico>
-      </div>
-
-      <div>
-        <app-agendamiento-info-panel-notas [citaInfo]="cita"></app-agendamiento-info-panel-notas>
-      </div>
+    <div class="relative z-10">
+      <p
+        class="text-[10px] font-black uppercase tracking-widest opacity-70">Nota
+        del Sistema</p>
+      <p class="font-bold text-sm">Verificar historial de alergias antes de
+        prescribir medicamentos.</p>
     </div>
+    <!-- Decoración sutil -->
+    <div
+      class="absolute -right-8 -top-8 w-32 h-32 bg-white/5 rounded-full"></div>
   </div>
+
+  <!-- 4. PANEL DE NOTAS (Ahora con aire respecto a la nota azul) -->
+  <div class="pt-2">
+    <app-agendamiento-info-panel-notas
+      [citaInfo]="cita">
+    </app-agendamiento-info-panel-notas>
+  </div>
+
 </div>

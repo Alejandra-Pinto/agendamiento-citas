@@ -71,18 +71,21 @@ export class CitaRepositoryImpl implements CitaRepository {
   }
 
   async buscarTodas(dto?: ConsultarCitasDto): Promise<Cita[]> {
-    // Definimos 'where' con el tipo oficial de la Entidad de TypeORM
     const where: FindOptionsWhere<CitaOrmEntity> = {};
 
     if (dto) {
+      // 1. AGREGAR ESTA LÍNEA: Si viene el id, filtramos por él
+      if (dto.id) where.id = dto.id;
+
       if (dto.pacienteId) where.pacienteId = dto.pacienteId;
       if (dto.especialistaId) where.especialistaId = dto.especialistaId;
     }
 
-    // Ahora pasamos 'where' directamente, sin 'as any'
     const citas = await this.repo.find({
       where,
       relations: ['paciente', 'especialista'],
+      // 2. OPCIONAL: Ordenar por fecha para que las listas siempre tengan sentido
+      order: { fechaHora: 'DESC' },
     });
 
     return citas.map((c) => this.mapToDomain(c));

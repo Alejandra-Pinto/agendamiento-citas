@@ -149,4 +149,13 @@ export class CitaController {
   async obtenerResumen() {
     return await this.listarTodasLasCitasUseCase.ejecutar();
   }
+
+  @Get(':id')
+  @Roles({ roles: ['ADMIN', 'ESPECIALISTA'] })
+  async obtenerPorId(@Param('id') id: string) {
+    return this.obtenerCitas.ejecutar({
+      id: id,
+      tipo: TipoConsultaCita.TODAS,
+    });
+  }
 }
