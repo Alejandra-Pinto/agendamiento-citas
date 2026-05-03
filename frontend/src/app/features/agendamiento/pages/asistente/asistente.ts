@@ -61,19 +61,30 @@ export class AsistenteComponent implements OnInit {
         next: (res: any[]) => {
           const ahora = new Date();
 
+          // 1. Obtenemos la lista actual de especialistas para saber quién es quién
+          const listaEspecialistas = this.especialistas();
+
           const procesadas = res.map((c) => {
-            const especialidadBack = c.especialidad || c.especialista?.especialidad || 'General';
-            const especialidadFormateada = especialidadBack
-              .replace(/_/g, ' ')
-              .toLowerCase()
-              .replace(/\b\w/g, (l: string) => l.toUpperCase());
+            // 2. Buscamos al doctor en nuestra lista local usando su ID
+            const doctorEncontrado = listaEspecialistas.find(
+              (e) => e.id.toString() === c.especialistaId.toString(),
+            );
+
+            // 3. Si lo encontramos, sacamos su especialidad. Si no, ponemos 'General'
+            const especialidadTexto = doctorEncontrado
+              ? doctorEncontrado.especialidad.replace(/_/g, ' ')
+              : 'Médica';
 
             return {
               ...c,
               especialistaNombre:
-                c.especialista?.nombre || `${c.especialista?.nombres} ${c.especialista?.apellidos}`,
-              notas: c.notas ? `${especialidadFormateada} — ${c.notas}` : especialidadFormateada,
-            } as Cita;
+                c.especialista?.nombre ||
+                (c.especialista?.nombres
+                  ? `${c.especialista.nombres} ${c.especialista.apellidos}`
+                  : 'Médico no asignado'),
+              // Inyectamos la especialidad solo para la vista
+              notas: especialidadTexto,
+            } as any;
           });
 
           const ordenadas = procesadas.sort(
@@ -114,15 +125,17 @@ export class AsistenteComponent implements OnInit {
 
   seleccionarDoctor(data: any) {
     if (!data) return;
-    const idBuscado = typeof data === 'object' ? data.id : data;
-    const doctorConFormato = this.doctoresFiltrados().find((d) => d.id === idBuscado);
 
-    if (doctorConFormato) {
-      this.doctorSeleccionado.set(doctorConFormato);
-    } else if (typeof data === 'object') {
+    const idBuscado = typeof data === 'object' ? data.id : data;
+    const doctorReal = this.especialistas().find((d) => String(d.id) === String(idBuscado));
+
+    if (doctorReal) {
       this.doctorSeleccionado.set({
-        ...data,
-        nombreMostrar: data.nombre || `${data.nombres || ''} ${data.apellidos || ''}`.trim(),
+        ...doctorReal,
+        // Si ya tiene 'nombre' (como la Dra. Ibis), lo usamos.
+        // Si no, unimos nombres y apellidos.
+        nombreMostrar:
+          doctorReal.nombre || `${doctorReal.nombres || ''} ${doctorReal.apellidos || ''}`.trim(),
       });
     }
 
@@ -182,14 +195,19 @@ export class AsistenteComponent implements OnInit {
     const doc = this.doctorSeleccionado();
     const fecha = this.fechaSeleccionada();
     const hora = this.horaSeleccionada();
+    const especialidad = this.especialidadElegida();
 
     if (!perfil?.username || !doc || !fecha || !hora) {
       this.mostrarNotificacion('Completa todos los campos antes de confirmar', 'warning');
       return;
     }
 
-    const [horas, minutos] = hora.split(':');
-    const fechaHoraStr = `${fecha}T${horas.padStart(2, '0')}:${minutos.padStart(2, '0')}:00`;
+    // DIVISIÓN SEGURA: Nos aseguramos de que horas y minutos siempre tengan 2 dígitos
+    const partes = hora.split(':');
+    const h = partes[0].padStart(2, '0');
+    const m = (partes[1] || '00').padEnd(2, '0'); // Si no hay minutos, ponemos '00'
+
+    const fechaHoraStr = `${fecha}T${h}:${m}:00`;
 
     const dto = {
       pacienteId: perfil.username,
