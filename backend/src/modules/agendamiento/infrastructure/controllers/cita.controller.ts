@@ -7,7 +7,17 @@ import {
   Res,
   Param,
   Patch,
+  BadRequestException,
+  HttpException,
 } from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiQuery,
+  ApiParam,
+  ApiBody,
+} from '@nestjs/swagger';
 import { type Response } from 'express'; // Importación necesaria para el tipado de res
 import { CrearCitaManualUseCase } from '../../application/use-cases/crear-cita-manual.usecase';
 import { ListarCitasProfesionalUseCase } from '../../application/use-cases/listar-citas-profesional.usecase';
@@ -25,7 +35,9 @@ import { MarcarNoAsistioUseCase } from '../../application/use-cases/noAsistida-c
 import { ExportarCitasUseCase } from '../../application/use-cases/exportar-citas.usecase';
 import { ListarTodasLasCitasUseCase } from '../../application/use-cases/listar-citas-general-citas.usecase';
 import { Roles } from 'nest-keycloak-connect';
+import { DisponibilidadDto } from '../../application/dto/disponibilidad.dto';
 
+@ApiTags('citas')
 @Controller('citas')
 export class CitaController {
   constructor(
@@ -43,27 +55,46 @@ export class CitaController {
 
   @Post()
   @Roles({ roles: ['ADMIN', 'ESPECIALISTA', 'PACIENTE'] })
+  @ApiOperation({ summary: 'Crear una cita médica' })
+  @ApiBody({ type: CrearCitaDto })
+  @ApiResponse({ status: 201, description: 'Cita creada correctamente' })
   async crear(@Body() dto: CrearCitaDto) {
-    return this.crearCita.ejecutar(dto);
+    try {
+      return await this.crearCita.ejecutar(dto);
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
+      throw new BadRequestException('Error al crear la cita');
+    }
   }
 
   @Get()
   @Roles({ roles: ['ADMIN', 'ESPECIALISTA'] })
+  @ApiOperation({ summary: 'Listar citas por especialista y fecha' })
+  @ApiQuery({ name: 'especialistaId', example: 'esp-123' })
+  @ApiQuery({ name: 'fecha', example: '2026-05-10' })
   async listar(
     @Query('especialistaId') especialistaId: string,
     @Query('fecha') fecha: string,
   ) {
-    return this.listarCitas.ejecutar(especialistaId, fecha);
+    try {
+      return await this.listarCitas.ejecutar(especialistaId, fecha);
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+      throw new BadRequestException('Error al listar citas');
+    }
   }
 
   @Get('/disponibilidad')
-  async disponibilidad(
-    @Query('especialistaId') especialistaId: string,
-    @Query('fecha') fecha: string,
-  ) {
+  @ApiOperation({ summary: 'Obtener disponibilidad de un especialista' })
+  @ApiQuery({ name: 'especialistaId', example: 'esp-123' })
+  @ApiQuery({ name: 'fecha', example: '2026-05-10' })
+  async disponibilidad(@Query() dto: DisponibilidadDto) {
     const horarios = await this.obtenerDisponibilidad.ejecutar(
-      especialistaId,
-      fecha,
+      dto.especialistaId,
+      dto.fecha,
     );
 
     return horarios.map((h) => ({
@@ -73,6 +104,8 @@ export class CitaController {
   }
 
   @Get('paciente/:pacienteId')
+  @ApiOperation({ summary: 'Listar citas de un paciente' })
+  @ApiParam({ name: 'pacienteId', example: 'pac-123' })
   async listarPorPaciente(@Param('pacienteId') pacienteId: string) {
     const dto: ConsultarCitasDto = {
       pacienteId: pacienteId,
@@ -84,68 +117,140 @@ export class CitaController {
   }
 
   @Get('/filtrar')
+  @ApiOperation({ summary: 'Filtrar citas con múltiples criterios' })
   async obtener(@Query() dto: ConsultarCitasDto) {
     return this.obtenerCitas.ejecutar(dto);
   }
 
   @Get('exportar')
   @Roles({ roles: ['ADMIN', 'ESPECIALISTA'] })
+  @ApiOperation({ summary: 'Exportar citas en PDF o Excel' })
+  @ApiQuery({ name: 'especialistaId', example: 'esp-123' })
+  @ApiQuery({ name: 'fecha', example: '2026-05-10' })
+  @ApiQuery({ name: 'formato', enum: ['pdf', 'excel'] })
   async exportar(
     @Query('especialistaId') especialistaId: string,
     @Query('fecha') fecha: string,
     @Query('formato') formato: 'pdf' | 'excel',
     @Res() res: Response, // Tipado correcto con Express
   ): Promise<void> {
-    const buffer = await this.exportarCitasUseCase.ejecutar(
-      especialistaId,
-      fecha,
-      formato,
-    );
+    try {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
+        throw new BadRequestException('Formato de fecha inválido');
+      }
 
-    const ext = formato === 'excel' ? 'xlsx' : 'pdf';
-    const contentType =
-      formato === 'excel'
-        ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-        : 'application/pdf';
+      const safeFecha = fecha.replace(/[^0-9-]/g, '');
 
-    res.set({
-      'Content-Type': contentType,
-      'Content-Disposition': `attachment; filename=citas_piedra_azul_${fecha}.${ext}`,
-      'Content-Length': buffer.length.toString(),
-    });
+      const buffer = await this.exportarCitasUseCase.ejecutar(
+        especialistaId,
+        safeFecha,
+        formato,
+      );
 
-    res.end(buffer);
+      const ext = formato === 'excel' ? 'xlsx' : 'pdf';
+      const contentType =
+        formato === 'excel'
+          ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+          : 'application/pdf';
+
+      res.set({
+        'Content-Type': contentType,
+        'Content-Disposition': `attachment; filename=citas_${safeFecha}.${ext}`,
+      });
+
+      res.end(buffer);
+    } catch (error) {
+      if (error instanceof Error && 'status' in error) {
+        throw error;
+      }
+
+      throw new BadRequestException('Error al exportar las citas');
+    }
   }
 
   @Patch(':id/cancelar')
   @Roles({ roles: ['ADMIN', 'ESPECIALISTA'] })
+  @ApiOperation({ summary: 'Cancelar una cita' })
+  @ApiParam({ name: 'id', example: 'cita-123' })
   async cancelar(@Param('id') id: string) {
-    return this.cancelarCita.ejecutar(id);
+    try {
+      return await this.cancelarCita.ejecutar(id);
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
+      throw new BadRequestException('Error al cancelar la cita');
+    }
   }
 
   @Patch(':id/reagendar')
   @Roles({ roles: ['ADMIN', 'ESPECIALISTA'] })
+  @ApiOperation({ summary: 'Reagendar una cita' })
+  @ApiParam({ name: 'id', example: 'cita-123' })
+  @ApiBody({
+    schema: {
+      example: { fechaHora: '2026-05-10T10:00:00.000Z' },
+    },
+  })
   async reagendar(
     @Param('id') id: string,
     @Body('fechaHora') fechaHora: string,
   ) {
-    return this.reagendarCita.ejecutar(id, new Date(fechaHora));
+    try {
+      // Validación básica
+      if (!fechaHora || isNaN(new Date(fechaHora).getTime())) {
+        throw new BadRequestException('Fecha inválida');
+      }
+
+      return await this.reagendarCita.ejecutar(id, new Date(fechaHora));
+    } catch (error) {
+      if (error instanceof Error && 'status' in error) {
+        throw error; // errores controlados
+      }
+
+      // error interno oculto
+      throw new BadRequestException('Error al reagendar la cita');
+    }
   }
 
   @Patch(':citaId/finalizar')
   @Roles({ roles: ['ADMIN', 'ESPECIALISTA'] })
+  @ApiOperation({ summary: 'Finalizar una cita' })
+  @ApiParam({ name: 'citaId', example: 'cita-123' })
   async finalizar(@Param('citaId') citaId: string) {
-    return this.finalizarCita.ejecutar(citaId);
+    try {
+      return await this.finalizarCita.ejecutar(citaId);
+    } catch (error) {
+      // Si ya es una excepción de Nest → la dejamos pasar
+      if (error instanceof Error && 'status' in error) {
+        throw error;
+      }
+
+      // Si es error interno → lo ocultamos
+      throw new BadRequestException('Error al finalizar la cita');
+    }
   }
 
   @Patch(':id/no-asistio')
   @Roles({ roles: ['ADMIN', 'ESPECIALISTA'] })
+  @ApiOperation({ summary: 'Marcar cita como no asistida' })
+  @ApiParam({ name: 'id', example: 'cita-123' })
   async marcarNoAsistio(@Param('id') id: string) {
-    return this.marcarNoAsistioUseCase.ejecutar(id);
+    try {
+      return await this.marcarNoAsistioUseCase.ejecutar(id);
+    } catch (error) {
+      if (error instanceof Error && 'status' in error) {
+        throw error;
+      }
+
+      throw new BadRequestException('Error al actualizar la cita');
+    }
   }
 
   @Get('resumen-disponibilidad')
   @Roles({ roles: ['ADMIN', 'ESPECIALISTA'] })
+  @ApiOperation({ summary: 'Resumen general de citas y disponibilidad' })
   async obtenerResumen() {
     return await this.listarTodasLasCitasUseCase.ejecutar();
   }

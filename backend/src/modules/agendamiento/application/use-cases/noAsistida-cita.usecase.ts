@@ -1,4 +1,9 @@
-import { Inject, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Cita, EstadoCita } from '../../domain/entities/cita.entity';
 import type { CitaRepository } from '../../domain/repositories/cita.repository';
 
@@ -13,7 +18,7 @@ export class MarcarNoAsistioUseCase {
     const cita = await this.citaRepository.buscarPorId(citaId);
 
     if (!cita) {
-      throw new Error('Cita no encontrada');
+      throw new NotFoundException('Cita no encontrada');
     }
 
     //No permitir marcar si ya fue cancelada o finalizada
@@ -21,7 +26,7 @@ export class MarcarNoAsistioUseCase {
       cita.estado === EstadoCita.CANCELADA ||
       cita.estado === EstadoCita.FINALIZADA
     ) {
-      throw new Error('No se puede marcar como no asistió');
+      throw new BadRequestException('No se puede marcar como no asistió');
     }
 
     const ahora = new Date().getTime();
@@ -29,7 +34,7 @@ export class MarcarNoAsistioUseCase {
 
     //No permitir antes de que ocurra
     if (ahora < inicio) {
-      throw new Error('La cita aún no ocurre');
+      throw new BadRequestException('La cita aún no ocurre');
     }
 
     // ✔ Cambiar estado

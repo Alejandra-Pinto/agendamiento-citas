@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import type { CitaRepository } from '../../domain/repositories/cita.repository';
 import { Cita } from '../../domain/entities/cita.entity'; // Importa la entidad
 
@@ -12,7 +12,7 @@ export class ListarCitasProfesionalUseCase {
   async ejecutar(especialistaId: string, fecha?: string): Promise<Cita[]> {
     // 1. Validar que el especialistaId no esté vacío
     if (!especialistaId || especialistaId.trim() === '') {
-      throw new Error('El ID del especialista es requerido');
+      throw new BadRequestException('El ID del especialista es requerido');
     }
 
     // 2. Si no se proporciona fecha, usar la fecha actual
@@ -20,7 +20,9 @@ export class ListarCitasProfesionalUseCase {
 
     // 3. Validar formato de fecha si se proporcionó
     if (fecha && !this.esFechaValida(fecha)) {
-      throw new Error('Formato de fecha inválido. Use YYYY-MM-DD');
+      throw new BadRequestException(
+        'Formato de fecha inválido. Use YYYY-MM-DD',
+      );
     }
 
     // 4. Obtener las citas

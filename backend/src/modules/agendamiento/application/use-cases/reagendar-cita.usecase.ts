@@ -1,4 +1,9 @@
-import { Inject, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { EstadoCita } from '../../domain/entities/cita.entity';
 import type { CitaRepository } from '../../domain/repositories/cita.repository';
 
@@ -12,25 +17,25 @@ export class ReagendarCitaUseCase {
   async ejecutar(citaId: string, nuevaFecha: Date) {
     const cita = await this.citaRepository.buscarPorId(citaId);
 
-    if (!cita) throw new Error('Cita no encontrada');
+    if (!cita) throw new NotFoundException('Cita no encontrada');
 
     //No reagendar canceladas o finalizadas
     if (
       cita.estado === EstadoCita.CANCELADA ||
       cita.estado === EstadoCita.FINALIZADA
     ) {
-      throw new Error('No puedes reagendar esta cita');
+      throw new BadRequestException('No puedes reagendar esta cita');
     }
 
     //No permitir pasado
     if (nuevaFecha < new Date()) {
-      throw new Error('No puedes reagendar al pasado');
+      throw new BadRequestException('No puedes reagendar al pasado');
     }
 
     //Validar horario (8 a 18)
     const hora = nuevaFecha.getHours();
     if (hora < 8 || hora >= 18) {
-      throw new Error('Fuera del horario de atención');
+      throw new BadRequestException('Fuera del horario de atención');
     }
 
     //Traer citas del mismo día
@@ -55,7 +60,7 @@ export class ReagendarCitaUseCase {
     });
 
     if (conflicto) {
-      throw new Error('Horario no disponible');
+      throw new BadRequestException('Horario no disponible');
     }
 
     //Reagendar

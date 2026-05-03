@@ -1,5 +1,10 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { Injectable, Inject } from '@nestjs/common';
+import {
+  Injectable,
+  Inject,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { HistoriaClinica } from '../../domain/entities/historia-clinica.entity';
 import type { HistoriaClinicaRepository } from '../../domain/repositories/historia-clinica.repository';
 import { CrearHistoriaDto } from '../dto/crear-historia.dto';
@@ -24,19 +29,19 @@ export class CrearHistoriaUseCase {
   async ejecutar(dto: CrearHistoriaDto): Promise<HistoriaClinica> {
     const existeCita = await this.citaPort.obtenerPorId(dto.citaId);
     if (!existeCita) {
-      throw new Error('La cita no existe');
+      throw new NotFoundException('La cita no existe');
     }
 
     const existeProfesional = await this.especialistaPort.obtenerPorId(
       dto.especialistaId,
     );
     if (!existeProfesional) {
-      throw new Error('Especialista no válido');
+      throw new BadRequestException('Especialista no válido');
     }
 
     const existePaciente = await this.pacientePort.obtenerPorId(dto.pacienteId);
     if (!existePaciente) {
-      throw new Error('Paciente no válido');
+      throw new BadRequestException('Paciente no válido');
     }
 
     const historia = new HistoriaClinica(
