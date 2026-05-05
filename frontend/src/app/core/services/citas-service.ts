@@ -85,6 +85,11 @@ export class CitasService {
     return this.http.patch(`${this.api}/${id}/${endpoint}`, {});
   }
 
+  reagendarCita(id: string, fechaHora: string): Observable<any> {
+    // Aquí enviamos la fechaHora que el controlador de NestJS espera
+    return this.http.patch(`${this.api}/${id}/reagendar`, { fechaHora });
+  }
+
   actualizarNotasCita(id: string, data: { notas?: string; tags?: string }): Observable<any> {
     return this.http.patch(`${this.api}/${id}`, data);
   }

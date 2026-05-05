@@ -214,13 +214,13 @@ export class CitaController {
     }
   }
 
-  @Patch(':citaId/finalizar')
+  @Patch(':id/finalizar')
   @Roles({ roles: ['ADMIN', 'ESPECIALISTA'] })
   @ApiOperation({ summary: 'Finalizar una cita' })
-  @ApiParam({ name: 'citaId', example: 'cita-123' })
-  async finalizar(@Param('citaId') citaId: string) {
+  @ApiParam({ name: 'id', example: 'cita-123' })
+  async finalizar(@Param('id') id: string) {
     try {
-      return await this.finalizarCita.ejecutar(citaId);
+      return await this.finalizarCita.ejecutar(id);
     } catch (error) {
       // Si ya es una excepción de Nest → la dejamos pasar
       if (error instanceof Error && 'status' in error) {

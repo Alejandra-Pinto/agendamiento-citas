@@ -74,19 +74,60 @@ export class VistaCitaDoctor implements OnInit {
     });
   }
 
-  onEstadoChanged(nuevoEstado: string) {
-    // El '?' evita el error de "possibly undefined"
+  async onEstadoChanged(nuevoEstado: string) {
     const id = this.cita?.id;
     if (!id) return;
 
-    this.citasService.actualizarEstadoCita(id, 'CANCELADA').subscribe({
+    // Si el usuario eligió REAGENDADA, necesitamos una fecha
+    if (nuevoEstado === 'REAGENDADA') {
+      const { value: fechaSeleccionada } = await Swal.fire({
+        title: 'Seleccionar nueva fecha y hora',
+        html: `
+        <input type="datetime-local" id="fechaHora" class="swal2-input" 
+               min="${new Date().toISOString().slice(0, 16)}">
+      `,
+        focusConfirm: false,
+        showCancelButton: true,
+        confirmButtonText: 'Reagendar',
+        cancelButtonText: 'Cancelar',
+        preConfirm: () => {
+          const valor = (document.getElementById('fechaHora') as HTMLInputElement).value;
+          if (!valor) {
+            Swal.showValidationMessage('Debes seleccionar una fecha');
+          }
+          return valor;
+        },
+      });
+
+      // Si el usuario seleccionó una fecha y le dio a "Reagendar"
+      if (fechaSeleccionada) {
+        this.ejecutarReagendamiento(id, fechaSeleccionada);
+      }
+    } else {
+      // Para los demás estados (FINALIZADA, CANCELADA, etc.)
+      this.citasService.actualizarEstadoCita(id, nuevoEstado).subscribe({
+        next: () => {
+          if (this.cita) this.cita.estado = nuevoEstado as any;
+          Swal.fire('¡Éxito!', 'Estado actualizado', 'success');
+        },
+        error: (err) => Swal.fire('Error', err.error?.message, 'error'),
+      });
+    }
+  }
+
+  // Creamos un método aparte para que el código sea más ordenado
+  private ejecutarReagendamiento(id: string, nuevaFecha: string) {
+    this.citasService.reagendarCita(id, nuevaFecha).subscribe({
       next: (res) => {
-        Swal.fire('¡Éxito!', 'Cita actualizada', 'success');
+        if (this.cita) {
+          this.cita.estado = 'REAGENDADA';
+          this.cita.fechaHora = nuevaFecha; // Guardamos el string que nos dio el input
+        }
+        Swal.fire('¡Reagendada!', 'La cita ha sido movida con éxito', 'success');
       },
       error: (err) => {
-        // Si el backend envía el error, lo mostramos aquí
-        const mensajeError = err.error?.message || 'Error al actualizar';
-        Swal.fire('Atención', mensajeError, 'warning');
+        // Aquí el backend te dirá si hay solapamiento o si es fin de semana
+        Swal.fire('No se pudo reagendar', err.error?.message || 'Error de validación', 'error');
       },
     });
   }

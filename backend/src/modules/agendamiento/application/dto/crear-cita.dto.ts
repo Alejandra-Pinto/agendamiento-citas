@@ -17,11 +17,9 @@ export class CrearCitaDto {
     example: '2026-05-10T10:00:00.000Z',
     description: 'Fecha y hora de la cita',
   })
-  @Type(() => Date) // convierte string → Date automáticamente
-  @IsDate()
-  @Matches(/^\d{4}-\d{2}-\d{2}$/, {
-    message: 'La fecha debe tener formato YYYY-MM-DD',
-  })
+  @Type(() => Date)
+  @IsDate({ message: 'La fecha proporcionada no es válida' })
+  // Quitamos @Matches porque choca con @IsDate
   fechaHora: Date;
 
   @ApiProperty({
