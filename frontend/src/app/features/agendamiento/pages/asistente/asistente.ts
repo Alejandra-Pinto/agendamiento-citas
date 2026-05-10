@@ -1,4 +1,4 @@
-import { Component, signal, inject, OnInit, computed } from '@angular/core';
+import { Component, signal, inject, OnInit, computed, Signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthStateService } from '../../../../core/services/auth-state.service';
@@ -8,6 +8,7 @@ import { EspecialistaSelectorComponent } from '../../componentes/especialista-se
 import { HorarioSelectorComponent } from '../../componentes/horario-selector/horario-selector';
 import { FormActionsComponent } from '../../componentes/form-actions/form-actions';
 import { Cita } from '../../../../core/models/cita.model';
+import { AdminService } from '../../../../core/services/admin.service';
 import Swal from 'sweetalert2';
 
 @Component({
@@ -27,6 +28,7 @@ export class AsistenteComponent implements OnInit {
   public authService = inject(AuthStateService);
   private citasService = inject(CitasService);
   private especialistaService = inject(EspecialistaService);
+  private adminService = inject(AdminService);
 
   // Signals de estado
   especialistas = signal<any[]>([]);
@@ -35,6 +37,9 @@ export class AsistenteComponent implements OnInit {
   fechaSeleccionada = signal<string>('');
   horaSeleccionada = signal<string>('');
   tipoCita = signal<string>('');
+
+  configuracionGlobal = signal<any>(null);
+  agendaDoctorActual = signal<any>(null);
 
   citasPasadas = signal<any[]>([]);
   citasFuturas = signal<any[]>([]);
@@ -46,6 +51,7 @@ export class AsistenteComponent implements OnInit {
   ngOnInit() {
     this.cargarEspecialistas();
     this.cargarHistorialPaciente();
+    this.cargarConfiguracionGlobal();
   }
 
   cargarEspecialistas() {
@@ -97,6 +103,13 @@ export class AsistenteComponent implements OnInit {
     }
   }
 
+  cargarConfiguracionGlobal() {
+    this.adminService.obtenerConfiguracionGlobal().subscribe({
+      next: (conf) => this.configuracionGlobal.set(conf),
+      error: () => console.error('No se pudo cargar la config global')
+    });
+  }
+
   // Función auxiliar para evitar errores de tipos en el estado
   private validarEstado(estado: string): any {
     const validos = ['PROGRAMADA', 'CANCELADA', 'REAGENDADA', 'FINALIZADA'];
@@ -136,6 +149,16 @@ export class AsistenteComponent implements OnInit {
         // Si no, unimos nombres y apellidos.
         nombreMostrar:
           doctorReal.nombre || `${doctorReal.nombres || ''} ${doctorReal.apellidos || ''}`.trim(),
+      });
+
+      // Cargamos la agenda del doctor para mostrarla en el calendario
+      this.adminService.obtenerAgendaEspecialista(String(doctorReal.id)).subscribe({
+        next: (agenda) => {
+          this.agendaDoctorActual.set(agenda);
+          this.horaSeleccionada.set(''); // Limpiamos la hora seleccionada al cambiar de doctor
+          this.cargarDisponibilidad(); // Recargamos la disponibilidad con la nueva agenda
+        },
+        error: () => this.agendaDoctorActual.set(null),
       });
     }
 
@@ -270,6 +293,59 @@ export class AsistenteComponent implements OnInit {
     this.horaSeleccionada.set('');
     this.horarios.set([]);
     this.intentoEnvio = false;
+  }
+
+
+  private festivosColombia = [
+    '2026-01-01', '2026-01-06', '2026-03-23', '2026-04-02', '2026-04-03',
+    '2026-05-01', '2026-05-18', '2026-06-08', '2026-06-15', '2026-06-29',
+    '2026-07-20', '2026-08-07', '2026-08-17', '2026-10-12', '2026-11-02',
+    '2026-11-16', '2026-12-08', '2026-12-25'
+  ];
+
+  filtroCalendario = (d: Date | null): boolean => {
+    if (!d) return false;
+
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+
+    // Bloqueo Pasado
+    if (d < hoy) return false;
+
+    // Bloqueo Ventana de Semanas (Usando el Signal configuracionGlobal)
+    const config = this.configuracionGlobal();
+    if (config?.ventanaHabilitacionSemanas) {
+      const fechaLimite = new Date();
+      fechaLimite.setDate(hoy.getDate() + (config.ventanaHabilitacionSemanas * 7));
+      if (d > fechaLimite) return false;
+    }
+
+    // Bloqueo Festivos
+    const anio = d.getFullYear();
+    const mes = (d.getMonth() + 1).toString().padStart(2, '0');
+    const dia = d.getDate().toString().padStart(2, '0');
+    const stringFechaLocal = `${anio}-${mes}-${dia}`;
+    if (this.festivosColombia.includes(stringFechaLocal)) return false;
+
+    // Bloqueo Agenda del Especialista
+    return this.validarDiaEspecialista(d);
+  };
+
+  private validarDiaEspecialista(fecha: Date): boolean {
+    const agenda = this.agendaDoctorActual(); // Usamos el Signal de la agenda
+    if (!agenda || !agenda.horarioAtencion?.diaSemana) return true;
+
+    const diasMapa: { [key: number]: string } = {
+      0: 'domingo', 1: 'lunes', 2: 'martes', 3: 'miercoles',
+      4: 'jueves', 5: 'viernes', 6: 'sabado'
+    };
+
+    const diaNombreActual = diasMapa[fecha.getDay()];
+    const diasConfigurados = agenda.horarioAtencion.diaSemana.map((d: string) =>
+      d.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    );
+
+    return diasConfigurados.includes(diaNombreActual);
   }
 
   private mostrarNotificacion(mensaje: string, tipo: 'error' | 'warning' = 'error') {

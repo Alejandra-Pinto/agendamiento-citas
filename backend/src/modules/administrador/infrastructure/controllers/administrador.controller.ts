@@ -29,7 +29,7 @@ export class AdministradorController {
   // --- RUTAS PARA ESPECIALISTAS ---
 
   @Get('especialista/:id/agenda')
-  @Roles({ roles: ['ADMIN', 'ESPECIALISTA'] })
+  @Roles({ roles: ['ADMIN', 'ESPECIALISTA', 'PACIENTE'] })
   @ApiOperation({ summary: 'Obtener agenda de un especialista' })
   @ApiParam({
     name: 'id',

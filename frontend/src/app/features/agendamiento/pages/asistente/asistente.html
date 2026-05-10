@@ -1,4 +1,4 @@
-<div class="flex-1 w-full bg-[#E6EBED] min-h-screen">
+<div class="flex-1 w-full bg-[#D7DCDE] min-h-screen">
   <div class="p-8">
     <div class="max-w-7xl mx-auto">
       <div class="grid grid-cols-12 gap-8">
@@ -94,6 +94,7 @@
                   [fecha]="fechaSeleccionada()"
                   [horaSeleccionada]="horaSeleccionada()"
                   [horarios]="horarios()"
+                  [filtroFechas]="filtroCalendario"
                   (fechaChange)="onFechaChange($event)"
                   (horaChange)="horaSeleccionada.set($event)">
                 </app-horario-selector>
