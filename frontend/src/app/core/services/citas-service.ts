@@ -30,9 +30,7 @@ export class CitasService {
     });
   }
 
-  buscarSugerencias(termino: string) {
-    return this.http.get<any[]>(`${this.api}/pacientes/buscar?q=${termino}`);
-  }
+  
 
   // Reporte
   exportarReporte(especialistaId: string, fecha: string, formato: 'pdf' | 'excel') {

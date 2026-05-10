@@ -57,41 +57,39 @@ export class Agendamiento implements OnInit {
 
   sugerencias: any[] = []; // Array para guardar los resultados temporales
 
-  onInputCedula() {
-    const query = this.formData.cedula.trim();
-    console.log('Buscando:', query); // Para que veas si está entrando a la función
 
+  ngOnInit(): void {
+    console.log('AGENDAMIENTO CARGADO');
+    this.cargarEspecialistas();
+    this.cargarConfiguracionGlobal();
+  }
+
+  
+  onInputBusqueda(event: any) {
+    const query = event.target.value.trim();
+    
     if (query.length >= 3) {
-      this.citasService.buscarSugerencias(query).subscribe({
-        next: (data) => {
-          console.log('Resultados:', data); // Mira si llegan datos
-          this.sugerencias = data;
+      this.pacienteService.buscarSugerencias(query).subscribe({
+        next: (data) => {       
+          this.sugerencias = data ?? [];
         },
         error: (err) => {
-          console.error('Error en sugerencias:', err);
+          console.error('Error al buscar sugerencias:', err);
           this.sugerencias = [];
-        },
+        }
       });
     } else {
       this.sugerencias = [];
     }
   }
 
+  // Al seleccionar, llenamos ambos campos
   seleccionarPaciente(paciente: any) {
-    this.formData.cedula = paciente.cedula;
+    this.formData.cedula = paciente.documento;
     this.formData.nombre = `${paciente.nombres} ${paciente.apellidos}`;
     this.pacienteEncontrado = paciente;
-
-    // Limpiamos las sugerencias al elegir uno
     this.sugerencias = [];
-
-    // Opcional: Cargar disponibilidad si ya hay especialista elegido
     this.cargarDisponibilidad();
-  }
-  ngOnInit(): void {
-    console.log('AGENDAMIENTO CARGADO');
-    this.cargarEspecialistas();
-    this.cargarConfiguracionGlobal();
   }
 
   cargarEspecialistas() {

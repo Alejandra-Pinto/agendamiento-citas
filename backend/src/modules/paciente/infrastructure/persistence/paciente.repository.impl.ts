@@ -1,3 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/require-await */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -5,7 +9,7 @@ import { Repository } from 'typeorm';
 import type { PacienteRepository } from '../../domain/repositories/paciente.repository';
 import { Paciente } from '../../domain/entities/paciente.entity';
 import { PacienteOrmEntity } from './paciente.orm.entity';
-
+import { ILike } from 'typeorm';
 @Injectable()
 export class PacienteRepositoryImpl implements PacienteRepository {
   constructor(
@@ -58,6 +62,18 @@ export class PacienteRepositoryImpl implements PacienteRepository {
 
   async delete(id: string): Promise<void> {
     await this.repo.delete({ documento: id });
+  }
+
+  async buscarPorTermino(query: string): Promise<Paciente[]> {
+    const entities = await this.repo.find({
+      where: [
+        { documento: ILike(`%${query}%`) },
+        { nombres: ILike(`%${query}%`) },
+        { apellidos: ILike(`%${query}%`) },
+      ],
+      take: 5, // Limitamos a 5 para que el autocompletado sea rápido
+    });
+    return entities.map((e) => this.toDomain(e));
   }
 
   private toDomain(entity: PacienteOrmEntity): Paciente {

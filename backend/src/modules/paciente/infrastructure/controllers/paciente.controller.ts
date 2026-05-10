@@ -1,4 +1,7 @@
-import { Body, Controller, Get, Post, Param } from '@nestjs/common';
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/require-await */
+import { Body, Controller, Get, Post, Param, Query } from '@nestjs/common';
 import { CrearPacienteUseCase } from '../../application/use-cases/crear-paciente.usecase';
 import { ListarPacientesUseCase } from '../../application/use-cases/listar-pacientes.usecase';
 import { BuscarPacienteUseCase } from './../../application/use-cases/buscar-paciente.usecase';
@@ -37,6 +40,12 @@ export class PacienteController {
   @ApiResponse({ status: 200, description: 'Listado de pacientes' })
   async listar() {
     return this.listarPaciente.ejecutar();
+  }
+
+  @Get('buscar/sugerencias')
+  @Roles({ roles: ['ADMIN', 'ESPECIALISTA'] })
+  async buscarSugerencias(@Query('q') query: string) {
+    return await this.buscarPaciente.buscarPorTermino(query);
   }
 
   @Get(':documento')

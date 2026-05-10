@@ -22,6 +22,6 @@ export class PacienteService {
 
   // Buscar sugerencias para el autocompletado
   buscarSugerencias(termino: string): Observable<any[]> {
-    return this.http.get<any[]>(`${this.api}/buscar?q=${termino}`);
+    return this.http.get<any[]>(`${this.api}/buscar/sugerencias?q=${termino}`);
   }
 }

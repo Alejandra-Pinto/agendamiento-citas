@@ -11,4 +11,10 @@ export class BuscarPacienteUseCase {
   async ejecutar(documento: string) {
     return this.pacienteRepository.findById(documento);
   }
+
+  async buscarPorTermino(termino: string) {
+    if (!termino) return [];
+    const resultados = await this.pacienteRepository.buscarPorTermino(termino);
+    return resultados;
+  }
 }

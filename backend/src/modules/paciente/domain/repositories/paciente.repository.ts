@@ -6,4 +6,6 @@ export interface PacienteRepository {
   findById(documento: string): Promise<Paciente | null>;
   update(especialista: Paciente): Promise<void>;
   delete(id: string): Promise<void>;
+
+  buscarPorTermino(query: string): Promise<Paciente[]>;
 }
