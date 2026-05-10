@@ -1,11 +1,15 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatInputModule } from '@angular/material/input';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatNativeDateModule } from '@angular/material/core';
 
 @Component({
   selector: 'app-horario-selector',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MatDatepickerModule, MatInputModule, MatFormFieldModule, MatNativeDateModule],
   templateUrl: './horario-selector.html',
 })
 export class HorarioSelectorComponent {
@@ -13,11 +17,19 @@ export class HorarioSelectorComponent {
   @Input() horaSeleccionada: string = '';
   @Input() horarios: any[] = [];
 
+  @Input() filtroFechas: (d: Date | null) => boolean = () => true;
+
   @Output() fechaChange = new EventEmitter<string>();
   @Output() horaChange = new EventEmitter<string>();
 
-  onFechaChange(nuevaFecha: string) {
-    this.fechaChange.emit(nuevaFecha);
+
+  onFechaChange(event: any) {
+
+    // El datepicker de Material devuelve un objeto Date, lo convertimos a string YYYY-MM-DD
+    if (event.value) {
+      const fechaSeleccionada = event.value.toISOString().split('T')[0];
+      this.fechaChange.emit(fechaSeleccionada);
+    }
   }
 
   onHoraChange(nuevaHora: string) {

@@ -97,6 +97,7 @@
                     [fecha]="formData.fecha"
                     [horaSeleccionada]="formData.hora"
                     [horarios]="horarios"
+                    [filtroFechas]="filtroCalendario"
                     (fechaChange)="actualizarFecha($event)"
                     (horaChange)="formData.hora = $event"
                   ></app-horario-selector>

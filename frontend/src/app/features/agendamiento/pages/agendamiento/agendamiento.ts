@@ -11,6 +11,7 @@ import Swal from 'sweetalert2';
 import { NgModel } from '@angular/forms';
 import { DisponibilidadDoctores } from '../../componentes/disponibilidad-doctores/disponibilidad-doctores';
 import { PacienteService } from '../../../../core/services/paciente.service';
+import { AdminService } from '../../../../core/services/admin.service';
 
 @Component({
   selector: 'app-agendamiento',
@@ -22,7 +23,7 @@ import { PacienteService } from '../../../../core/services/paciente.service';
     EspecialistaSelectorComponent,
     HorarioSelectorComponent,
     FormActionsComponent,
-    DisponibilidadDoctores,
+    DisponibilidadDoctores
   ],
   templateUrl: './agendamiento.html',
   styleUrl: './agendamiento.scss',
@@ -42,11 +43,17 @@ export class Agendamiento implements OnInit {
     tipo: '',
   };
 
+  // Agrega una variable para guardar el límite
+  ventanaSemanas: number = 4; // Valor por defecto
+
   constructor(
     private citasService: CitasService,
     private especialistaService: EspecialistaService,
-    private pacienteService: PacienteService
-  ) {}
+    private pacienteService: PacienteService,
+    private adminService: AdminService
+  ) {
+    this.filtroCalendario = this.filtroCalendario.bind(this);
+  }
 
   sugerencias: any[] = []; // Array para guardar los resultados temporales
 
@@ -84,12 +91,24 @@ export class Agendamiento implements OnInit {
   ngOnInit(): void {
     console.log('AGENDAMIENTO CARGADO');
     this.cargarEspecialistas();
+    this.cargarConfiguracionGlobal();
   }
 
   cargarEspecialistas() {
     this.especialistaService.listarEspecialistas().subscribe((data) => {
       console.log('Datos recibidos del Back:', data);
       this.especialistas = data;
+    });
+  }
+
+  cargarConfiguracionGlobal() {
+    this.adminService.obtenerConfiguracionGlobal().subscribe({
+      next: (config: any) => {
+        if (config && config.ventanaHabilitacionSemanas) {
+          this.ventanaSemanas = config.ventanaHabilitacionSemanas;
+          console.log('Ventana de agendamiento:', this.ventanaSemanas, 'semanas');
+        }
+      }
     });
   }
 
@@ -177,23 +196,24 @@ export class Agendamiento implements OnInit {
   }
 
   private generarHorariosDesdeConfiguracion(id: string): any[] {
-    // Buscamos al doctor en nuestra lista local de especialistas
     const doctor = this.especialistas.find((e) => e.id.toString() === id.toString());
 
     if (!doctor || !doctor.horarioAtencion) return [];
 
     const slots = [];
-    const [hInicio, mInicio] = doctor.horarioAtencion.horaInicio.split(':').map(Number);
-    const [hFin, mFin] = doctor.horarioAtencion.horaFin.split(':').map(Number);
+    // Asegúrate de que horaInicio y horaFin existan
+    const { horaInicio, horaFin } = doctor.horarioAtencion;
+    if (!horaInicio || !horaFin) return [];
+
+    const [hInicio, mInicio] = horaInicio.split(':').map(Number);
+    const [hFin, mFin] = horaFin.split(':').map(Number);
     const intervalo = doctor.intervaloAtencion || 20;
 
     let actual = hInicio * 60 + mInicio;
     const fin = hFin * 60 + mFin;
 
     while (actual < fin) {
-      const hh = Math.floor(actual / 60)
-        .toString()
-        .padStart(2, '0');
+      const hh = Math.floor(actual / 60).toString().padStart(2, '0');
       const mm = (actual % 60).toString().padStart(2, '0');
       slots.push({ hora: `${hh}:${mm}` });
       actual += intervalo;
@@ -204,7 +224,13 @@ export class Agendamiento implements OnInit {
 
   manejarCambioEspecialista(id: number) {
     this.formData.especialistaid = id.toString();
-    this.cargarDisponibilidad(); // Refrescamos horarios de inmediato
+    this.formData.fecha = ''; // Limpiamos fecha anterior para evitar inconsistencias
+    this.horarios = [];
+
+    // Re-asignamos la función para forzar al hijo a detectar un cambio de @Input
+    this.filtroCalendario = this.filtroCalendario.bind(this);
+
+    this.cargarDisponibilidad();
   }
 
   actualizarFecha(nuevaFecha: string) {
@@ -362,5 +388,65 @@ export class Agendamiento implements OnInit {
       ),
     ];
     return diasLimpios.join(', ');
+  }
+
+  festivosColombia = [
+    '2026-01-01', '2026-01-06', '2026-03-23', '2026-04-02', '2026-04-03',
+    '2026-05-01', '2026-05-18', '2026-06-08', '2026-06-15', '2026-06-29',
+    '2026-07-20', '2026-08-07', '2026-08-17', '2026-10-12', '2026-11-02',
+    '2026-11-16', '2026-12-08', '2026-12-25'
+  ];
+
+  filtroCalendario = (d: Date | null): boolean => {
+    if (!d) return false;
+
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+
+    // --- BLOQUEO 1: Pasado ---
+    if (d < hoy) return false;
+
+    // --- BLOQUEO 2: Ventana de Semanas (NUEVO) ---
+    const fechaLimite = new Date();
+    fechaLimite.setDate(hoy.getDate() + (this.ventanaSemanas * 7));
+    if (d > fechaLimite) return false;
+
+    // --- BLOQUEO 3: Festivos ---
+    const anio = d.getFullYear();
+    const mes = (d.getMonth() + 1).toString().padStart(2, '0');
+    const dia = d.getDate().toString().padStart(2, '0');
+    const stringFechaLocal = `${anio}-${mes}-${dia}`;
+    if (this.festivosColombia.includes(stringFechaLocal)) return false;
+
+    // --- BLOQUEO 4: Agenda del Especialista ---
+    return this.validarDiaEspecialista(d);
+  };
+
+  private validarDiaEspecialista(fecha: Date): boolean {
+    const idEsp = this.formData.especialistaid;
+    if (!idEsp) return false;
+
+    const doctor = this.especialistas.find(e => e.id.toString() === idEsp.toString());
+
+    if (!doctor || !doctor.horarioAtencion?.diaSemana) {
+      console.warn('El doctor no tiene horario configurado:', doctor);
+      return true;
+    }
+
+    const diasMapa: { [key: number]: string } = {
+      0: 'domingo', 1: 'lunes', 2: 'martes', 3: 'miercoles',
+      4: 'jueves', 5: 'viernes', 6: 'sabado'
+    };
+
+    const diaNombreActual = diasMapa[fecha.getDay()];
+
+    // Normalizamos usando 'diaSemana'
+    const diasConfigurados = doctor.horarioAtencion.diaSemana.map((d: string) =>
+      d.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    );
+
+    const esValido = diasConfigurados.includes(diaNombreActual);
+
+    return esValido;
   }
 }
