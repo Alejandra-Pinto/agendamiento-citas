@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { EspecialistaService } from '../../../../core/services/especialista.service';
 import { AdminService } from '../../../../core/services/admin.service';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-configuracion-admin',
@@ -26,7 +27,7 @@ export class ConfiguracionAdmin implements OnInit {
 
   ngOnInit() {
 
-    // 🔥 Inicializar especialistas con config (CLAVE)
+    // Inicializar especialistas con config (CLAVE)
     this.especialistaService.listarEspecialistas().subscribe((data: any[]) => {
       this.especialistas = data.map(esp => ({
         ...esp,
@@ -58,7 +59,7 @@ export class ConfiguracionAdmin implements OnInit {
 
           if (!esp) return;
 
-          // 🔥 Asegurar estructura SIEMPRE
+          // Asegurar estructura SIEMPRE
           if (!esp.config) {
             esp.config = {
               intervaloAtencion: 30,
@@ -70,7 +71,7 @@ export class ConfiguracionAdmin implements OnInit {
             };
           }
 
-          // 🔥 Si backend devuelve datos, los usamos
+          // Si backend devuelve datos, los usamos
           if (data) {
             console.log('CONFIG ESPECIALISTA:', data);
             esp.config = {
@@ -96,31 +97,37 @@ export class ConfiguracionAdmin implements OnInit {
     this.adminService.actualizarConfiguracionGlobal({
       ventanaHabilitacionSemanas: this.semanasGlobal
     }).subscribe(() => {
-      alert('Configuración global actualizada');
+      Swal.fire({
+        title: '¡Actualizado!',
+        text: 'La configuración global ha sido actualizada.',
+        icon: 'success',
+        confirmButtonColor: '#2563eb',
+        confirmButtonText: 'Entendido'
+      })
     });
   }
 
   guardarEspecialista(esp: any) {
     if (!esp.config || !esp.config.horarioAtencion) {
-      alert('Falta configuración');
+      this.mensajeError('Falta configuración base del especialista');
       return;
     }
 
     const config = esp.config;
 
-    // 🔴 VALIDACIONES FRONT (evitan 400)
+    // VALIDACIONES FRONT (evitan 400)
     if (!config.intervaloAtencion || config.intervaloAtencion < 5) {
-      alert('Intervalo inválido (mínimo 5)');
+      this.mensajeError('El intervalo debe ser de al menos 5 minutos.');
       return;
     }
 
     if (!config.horarioAtencion.horaInicio || !config.horarioAtencion.horaFin) {
-      alert('Debes seleccionar horas');
+      this.mensajeError('Debes seleccionar tanto la hora de inicio como la de fin.');
       return;
     }
 
     if (!config.horarioAtencion.diaSemana || config.horarioAtencion.diaSemana.length === 0) {
-      alert('Selecciona al menos un día');
+      this.mensajeError('Debes seleccionar al menos un día de atención.');
       return;
     }
 
@@ -133,19 +140,40 @@ export class ConfiguracionAdmin implements OnInit {
       }
     };
 
-    console.log('ENVIANDO:', JSON.stringify(payload, null, 2));
+    // Mostrar un "Cargando" mientras el backend responde
+    Swal.fire({
+      title: 'Guardando...',
+      didOpen: () => { Swal.showLoading(); },
+      allowOutsideClick: false
+    });
 
     this.adminService.actualizarAgendaEspecialista(esp.id, payload)
       .subscribe({
         next: () => {
-          alert('Configuración guardada');
+          Swal.fire({
+            title: '¡Actualizado!',
+            text: `La agenda de ${esp.nombre} ha sido actualizada.`,
+            icon: 'success',
+            timer: 1000,
+            showConfirmButton: false
+          });
         },
         error: (err) => {
           console.error('BACKEND:', err);
-          console.error('DETALLE:', err.error); // 🔥 AQUÍ SALE EL ERROR REAL
-          alert('Error del backend (revisa consola)');
+          console.error('DETALLE:', err.error); // AQUÍ SALE EL ERROR REAL
+          this.mensajeError('Error al actualizar la agenda. Revisa la consola para más detalles.');
         }
       });
+  }
+
+  // Función auxiliar para no repetir código de errores
+  private mensajeError(texto: string) {
+    Swal.fire({
+      title: 'Atención',
+      text: texto,
+      icon: 'warning',
+      confirmButtonColor: '#ef4444' // Rojo para errores
+    });
   }
 
   toggleDia(esp: any, dia: string) {
