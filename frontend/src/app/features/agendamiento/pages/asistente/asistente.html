@@ -47,8 +47,10 @@
                   class="text-[10px] uppercase tracking-widest font-bold text-slate-500">Selecciona
                   la Especialidad</label>
                 <select (change)="onEspecialidadChange($event)"
+                  [value]="especialidadElegida()"
                   class="w-full px-4 py-3 bg-white border-2 border-slate-100 rounded-xl text-sm font-medium text-slate-600 outline-none focus:border-blue-600 shadow-sm cursor-pointer">
-                  <option value>Seleccione una especialidad...</option>
+                  <option value="">Seleccione una especialidad...</option>
+                  <option value="GENERAL">No lo sé / Medicina General</option>
                   <option value="TERAPIA_NEURAL">Terapia Neural</option>
                   <option value="QUIROPRAXIA">Quiropraxia</option>
                   <option value="FISIOTERAPIA">Fisioterapia</option>

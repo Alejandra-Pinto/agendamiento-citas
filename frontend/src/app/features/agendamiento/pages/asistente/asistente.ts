@@ -1,4 +1,4 @@
-import { Component, signal, inject, OnInit, computed, Signal } from '@angular/core';
+import { Component, signal, inject, OnInit, computed, Signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthStateService } from '../../../../core/services/auth-state.service';
@@ -41,6 +41,7 @@ export class AsistenteComponent implements OnInit {
   configuracionGlobal = signal<any>(null);
   agendaDoctorActual = signal<any>(null);
 
+  historialCargado = signal<boolean>(false);
   citasPasadas = signal<any[]>([]);
   citasFuturas = signal<any[]>([]);
   horarios = signal<any[]>([]);
@@ -50,13 +51,23 @@ export class AsistenteComponent implements OnInit {
 
   ngOnInit() {
     this.cargarEspecialistas();
-    this.cargarHistorialPaciente();
     this.cargarConfiguracionGlobal();
+
+    effect(() => {
+      const usuario = this.authService.usuario();
+      const especialistas = this.especialistas();
+
+      if (!this.historialCargado() && usuario?.username && especialistas.length > 0) {
+        this.cargarHistorialPaciente();
+        this.historialCargado.set(true);
+      }
+    });
   }
 
   cargarEspecialistas() {
     this.especialistaService.listarEspecialistas().subscribe((data) => {
       this.especialistas.set(data);
+      this.cargarHistorialPaciente(); // Cargamos el historial después de tener la lista de especialistas 
     });
   }
 
@@ -119,14 +130,18 @@ export class AsistenteComponent implements OnInit {
   // Filtrado de doctores según la especialidad seleccionada
   doctoresFiltrados = computed(() => {
     const esp = this.especialidadElegida();
-    if (!esp) return [];
-    return this.especialistas()
-      .filter((d) => d.especialidad === esp)
-      .map((doc) => ({
-        ...doc,
-        nombreMostrar: doc.nombre || `${doc.nombres} ${doc.apellidos}`,
-        especialidadLabel: doc.especialidad.replace(/_/g, ' ').toLowerCase(),
-      }));
+    const todos = this.especialistas();
+
+    // Si no hay especialidad o es 'GENERAL', mostramos todos los doctores
+    const filtrados = (!esp || esp === 'GENERAL') 
+      ? todos 
+      : todos.filter((d) => d.especialidad === esp);
+
+    return filtrados.map((doc) => ({
+      ...doc,
+      nombreMostrar: doc.nombre || `${doc.nombres} ${doc.apellidos}`,
+      especialidadLabel: doc.especialidad.replace(/_/g, ' ').toLowerCase(),
+    }));
   });
 
   // Manejadores de eventos del HTML
@@ -292,6 +307,7 @@ export class AsistenteComponent implements OnInit {
     this.fechaSeleccionada.set('');
     this.horaSeleccionada.set('');
     this.horarios.set([]);
+    this.agendaDoctorActual.set(null);
     this.intentoEnvio = false;
   }
 
