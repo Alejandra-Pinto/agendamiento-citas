@@ -1,11 +1,9 @@
-
-
-<div class="flex-1 w-full  bg-[#E6EBED]">
+<div class="flex-1 w-full  bg-[#D7DCDE]">
   <div class="p-8">
     <div class="max-w-7xl mx-auto">
       <div class="grid grid-cols-12 gap-8">
         <div class="col-span-12 lg:col-span-8 space-y-8">
-          <div class="bg-[#F8FAFB] rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+          <div class="bg-[#F8FAFB] rounded-2xl shadow-sm border border-slate-500 overflow-hidden">
             <div class="p-8 border-b border-slate-50">
               <h2 class="text-3xl font-extrabold font-headline tracking-tight text-slate-800 mb-2">Detalles de la Cita</h2>
               <p class="text-sm text-slate-500 mt-1">
@@ -86,19 +84,35 @@
                 </div>
               </div>
 
-              <app-horario-selector
-                [fecha]="formData.fecha"
-                [horaSeleccionada]="formData.hora"
-                [horarios]="horarios"
-                (fechaChange)="actualizarFecha($event)"
-                (horaChange)="formData.hora = $event"
-              ></app-horario-selector>
 
               <app-especialista-selector
                 [especialistas]="especialistas"
                 [seleccionadoId]="formData.especialistaid"
                 (cambioEspecialista)="manejarCambioEspecialista($event)"
               ></app-especialista-selector>
+
+              @if (formData.especialistaid) {
+                <div class="animate-fade-in">
+                  <app-horario-selector
+                    [fecha]="formData.fecha"
+                    [horaSeleccionada]="formData.hora"
+                    [horarios]="horarios"
+                    (fechaChange)="actualizarFecha($event)"
+                    (horaChange)="formData.hora = $event"
+                  ></app-horario-selector>
+                </div>
+              }@else {
+                <div class="p-4 border-2 border-dashed border-slate-400 rounded-xl text-center">
+                  <p class="text-sm text-slate-500 font-medium">
+                    Seleccione un especialista para ver su disponibilidad de horarios.
+                  </p>
+                </div>
+              }
+              
+
+              
+
+
             </div>
 
             <app-form-actions
