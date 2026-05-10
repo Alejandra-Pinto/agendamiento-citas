@@ -61,7 +61,7 @@
                 *ngIf="especialidadElegida()">
                 <label
                   class="text-[10px] uppercase tracking-widest font-bold text-slate-500">Tipo
-                  de Consulta</label>
+                  de Consulta*</label>
                 <div class="flex gap-4">
                   <button type="button"
                     class="flex-1 flex items-center justify-center gap-2 py-4 rounded-xl border-2 transition-all font-bold text-sm"
@@ -105,7 +105,7 @@
 
             <div class="p-8 bg-slate-50/50 border-t border-slate-100">
               <app-form-actions
-                [disabled]="!horaSeleccionada() || !fechaSeleccionada()"
+                [disabled]="!tipoCita() || !horaSeleccionada() || !fechaSeleccionada()"
                 (onConfirm)="confirmarCita()"
                 (onCancel)="cancelar()"></app-form-actions>
             </div>

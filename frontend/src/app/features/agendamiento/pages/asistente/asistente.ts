@@ -235,8 +235,11 @@ export class AsistenteComponent implements OnInit {
     const hora = this.horaSeleccionada();
     const especialidad = this.especialidadElegida();
 
-    if (!perfil?.username || !doc || !fecha || !hora) {
-      this.mostrarNotificacion('Completa todos los campos antes de confirmar', 'warning');
+    if (!perfil?.username || !doc || !fecha || !hora || !this.tipoCita()) {
+      const mensaje = !this.tipoCita()
+        ? 'Selecciona si la cita es Primera Vez o Control antes de confirmar.'
+        : 'Completa todos los campos antes de confirmar';
+      this.mostrarNotificacion(mensaje, 'warning');
       return;
     }
 
