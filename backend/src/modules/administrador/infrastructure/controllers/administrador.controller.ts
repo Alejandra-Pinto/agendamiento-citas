@@ -18,7 +18,6 @@ import { Roles } from 'nest-keycloak-connect';
 
 @ApiTags('administrador')
 @Controller('administrador')
-@Roles({ roles: ['ADMIN'] })
 export class AdministradorController {
   constructor(
     private readonly configurarAgendaUC: ConfigurarAgendaUseCase,
@@ -30,6 +29,7 @@ export class AdministradorController {
   // --- RUTAS PARA ESPECIALISTAS ---
 
   @Get('especialista/:id/agenda')
+  @Roles({ roles: ['ADMIN', 'ESPECIALISTA'] })
   @ApiOperation({ summary: 'Obtener agenda de un especialista' })
   @ApiParam({
     name: 'id',
@@ -43,6 +43,7 @@ export class AdministradorController {
   }
 
   @Patch('especialista/:id/configurar-agenda')
+  @Roles({ roles: ['ADMIN'] })
   @ApiOperation({ summary: 'Configurar agenda de un especialista' })
   @ApiParam({
     name: 'id',
@@ -66,6 +67,7 @@ export class AdministradorController {
   // --- RUTAS PARA EL SISTEMA (GLOBAL) ---
 
   @Get('configuracion-global')
+  @Roles({ roles: ['ADMIN', 'ESPECIALISTA', 'PACIENTE'] })
   @ApiOperation({ summary: 'Obtener configuración global del sistema' })
   @ApiResponse({ status: 200, description: 'Configuración del sistema' })
   async verConfiguracionSistema() {
@@ -73,6 +75,7 @@ export class AdministradorController {
   }
 
   @Patch('configuracion-global')
+  @Roles({ roles: ['ADMIN'] })
   @ApiOperation({ summary: 'Actualizar reglas globales del sistema' })
   @ApiBody({ type: ActualizarReglasGlobalesDto })
   @ApiResponse({ status: 200, description: 'Configuración actualizada' })
