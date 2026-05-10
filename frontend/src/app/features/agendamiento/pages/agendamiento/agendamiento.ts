@@ -240,6 +240,7 @@ export class Agendamiento implements OnInit {
   get esFormularioInvalido(): boolean {
     return (
       !this.formData.cedula ||
+      !this.formData.tipo ||
       !this.pacienteEncontrado ||
       !this.formData.especialistaid ||
       !this.formData.fecha ||
