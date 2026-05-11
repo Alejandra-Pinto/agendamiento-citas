@@ -24,12 +24,22 @@ describe('CancelarCitaUseCase', () => {
       20,
       TipoCita.CONTROL,
     );
+    // Forzamos a que inicie como PROGRAMADA para el test
+    citaFake.estado = EstadoCita.PROGRAMADA;
+
     mockRepo.buscarPorId.mockResolvedValue(citaFake);
 
     const resultado = await useCase.ejecutar('1');
 
     expect(resultado.estado).toBe(EstadoCita.CANCELADA);
-    expect(mockRepo.guardar).toHaveBeenCalledWith(citaFake);
+
+    // CAMBIO AQUÍ: Usamos expect.objectContaining para validar el estado final
+    expect(mockRepo.guardar).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: '1',
+        estado: EstadoCita.CANCELADA,
+      }),
+    );
   });
 
   it('debería lanzar error si la cita no existe', async () => {
