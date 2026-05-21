@@ -1,6 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
-import { AuthStateService } from '../../../core/services/auth-state.service'; 
+import { AuthStateService } from '../../../core/services/auth-state.service';
 
 @Component({
   selector: 'app-sidebar',
@@ -10,6 +10,16 @@ import { AuthStateService } from '../../../core/services/auth-state.service';
   styleUrl: './sidebar.scss',
 })
 export class Sidebar {
-  // Inyectamos el servicio para usar sus Signals en el HTML
   public authService = inject(AuthStateService);
+
+  // Estado para controlar el menú en móviles
+  public isSidebarOpen = false;
+
+  toggleSidebar() {
+    this.isSidebarOpen = !this.isSidebarOpen;
+  }
+
+  closeSidebar() {
+    this.isSidebarOpen = false;
+  }
 }
