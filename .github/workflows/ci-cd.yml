@@ -25,7 +25,7 @@ jobs:
           node-version: 20
 
       - name: Instalar dependencias
-        run: npm install
+        run: npm install --legacy-peer-deps
 
       - name: Ejecutar pruebas backend
         run: npm run test
@@ -51,7 +51,7 @@ jobs:
           node-version: 20
 
       - name: Instalar dependencias
-        run: npm install
+        run: npm install --legacy-peer-deps
 
       - name: Compilar frontend
         run: npm run build
