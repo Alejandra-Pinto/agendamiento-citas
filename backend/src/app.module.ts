@@ -18,13 +18,12 @@ import { AuditoriaModule } from './modules/auditoria/auditoria.module';
     }),
     TypeOrmModule.forRoot({
       type: 'postgres',
-      host: 'localhost',
-      port: 5432,
-      username: 'postgres',
-      password: '020406',
-      database: 'piedra_azul',
+      url: process.env.DATABASE_URL,
       autoLoadEntities: true,
       synchronize: true,
+      ssl: {
+        rejectUnauthorized: false,
+      },
     }),
     AgendamientoModule,
     PacienteModule,
