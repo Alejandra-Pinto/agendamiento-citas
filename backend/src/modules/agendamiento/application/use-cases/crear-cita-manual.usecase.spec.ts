@@ -48,11 +48,20 @@ describe('CrearCitaManualUseCase', () => {
       horarioAtencion: { diaSemana: ['Lunes'] }, // La cita será un Martes en el test
     });
 
-    const martes = '2026-05-12T10:00:00Z'; // Es un martes
+    const fecha = new Date();
+
+    // Buscar el próximo martes
+    while (fecha.getDay() !== 2) {
+      fecha.setDate(fecha.getDate() + 1);
+    }
+
+    // Asegurar una hora válida
+    fecha.setHours(10, 0, 0, 0);
+
     const dto = {
       pacienteId: 'p1',
       especialistaId: 'e1',
-      fechaHora: martes,
+      fechaHora: fecha.toISOString(),
       tipo: 'CONTROL',
     } as any;
 
