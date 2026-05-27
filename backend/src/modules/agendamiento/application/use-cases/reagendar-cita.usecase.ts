@@ -1,26 +1,40 @@
+/* eslint-disable prettier/prettier */
 import {
   BadRequestException,
   Inject,
   Injectable,
   NotFoundException,
+  Logger,
 } from '@nestjs/common';
-import { Cita, EstadoCita } from '../../domain/entities/cita.entity'; // Importamos Cita (la clase)
+
+import { Cita, EstadoCita } from '../../domain/entities/cita.entity';
 import type { CitaRepository } from '../../domain/repositories/cita.repository';
 
 @Injectable()
 export class ReagendarCitaUseCase {
+  private readonly logger = new Logger(ReagendarCitaUseCase.name);
+
   constructor(
     @Inject('CitaRepository')
     private readonly citaRepository: CitaRepository,
   ) {}
 
   async ejecutar(citaId: string, nuevaFecha: Date) {
+    this.logger.log(
+      `Intentando reagendar cita ${citaId} para ${nuevaFecha.toISOString()}`,
+    );
+
     const data = await this.citaRepository.buscarPorId(citaId);
 
-    if (!data) throw new NotFoundException('Cita no encontrada');
+    if (!data) {
+      this.logger.warn(
+        `Intento de reagendar cita inexistente: ${citaId}`,
+      );
 
-    // --- REHIDRATACIÓN ---
-    // Convertimos los datos planos en una instancia de la entidad Cita
+      throw new NotFoundException('Cita no encontrada');
+    }
+
+    // Rehidratación
     const cita = new Cita(
       data.id,
       data.pacienteId,
@@ -31,34 +45,54 @@ export class ReagendarCitaUseCase {
       data.estado,
     );
 
-    // Identificamos si es una reversión por error (el usuario mantiene exactamente la misma fecha y hora original)
+    // Verificar si es misma fecha
     const esMismaFechaOriginal =
-      new Date(data.fechaHora).getTime() === new Date(nuevaFecha).getTime();
+      new Date(data.fechaHora).getTime() ===
+      new Date(nuevaFecha).getTime();
 
-    // Las validaciones de negocio estrictas solo se ejecutan si pretenden cambiar la fecha de verdad
     if (!esMismaFechaOriginal) {
-      // No reagendar canceladas o finalizadas de forma ordinaria
+      // No reagendar canceladas o finalizadas
       if (
         cita.estado === EstadoCita.CANCELADA ||
         cita.estado === EstadoCita.FINALIZADA
       ) {
-        throw new BadRequestException('No puedes reagendar esta cita');
+        this.logger.warn(
+          `Intento inválido de reagendar cita ${citaId} con estado ${cita.estado}`,
+        );
+
+        throw new BadRequestException(
+          'No puedes reagendar esta cita',
+        );
       }
 
-      // No permitir reprogramar al pasado
+      // No permitir pasado
       if (nuevaFecha < new Date()) {
-        throw new BadRequestException('No puedes reagendar al pasado');
+        this.logger.warn(
+          `Intento de reagendar cita ${citaId} a una fecha pasada`,
+        );
+
+        throw new BadRequestException(
+          'No puedes reagendar al pasado',
+        );
       }
 
-      // Validar horario comercial (8 a 18)
+      // Validar horario comercial
       const hora = nuevaFecha.getHours();
+
       if (hora < 8 || hora >= 18) {
-        throw new BadRequestException('Fuera del horario de atención');
+        this.logger.warn(
+          `Intento de reagendar cita ${citaId} fuera del horario de atención`,
+        );
+
+        throw new BadRequestException(
+          'Fuera del horario de atención',
+        );
       }
     }
 
-    // Traer citas del mismo día para validar solapamiento (Esta lógica se ejecuta siempre para evitar colisiones accidentales)
+    // Validar conflictos
     const fecha = nuevaFecha.toISOString().split('T')[0];
+
     const citas = await this.citaRepository.buscarPorProfesionalYFecha(
       cita.especialistaId,
       fecha,
@@ -77,14 +111,21 @@ export class ReagendarCitaUseCase {
     });
 
     if (conflicto) {
+      this.logger.warn(
+        `Conflicto de horario al reagendar cita ${citaId}`,
+      );
+
       throw new BadRequestException('Horario no disponible');
     }
 
-    // --- AHORA SÍ FUNCIONARÁ ---
-    // Modifica internamente el estado de la cita de vuelta a PROGRAMADA (según tu método del dominio)
+    // Reagendar
     cita.reagendar(nuevaFecha);
 
     await this.citaRepository.guardar(cita);
+
+    this.logger.log(
+      `Cita ${citaId} reagendada correctamente para ${nuevaFecha.toISOString()}`,
+    );
 
     return cita;
   }

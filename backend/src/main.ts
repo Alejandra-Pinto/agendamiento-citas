@@ -7,12 +7,9 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
 import { GlobalExceptionFilter } from './common/filters/http-exception.filter';
 
-import { WinstonModule } from 'nest-winston';
-import { winstonConfig } from './config/logger.config';
-
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
-    logger: WinstonModule.createLogger(winstonConfig),
+    //logger: WinstonModule.createLogger(winstonConfig),
   });
 
   // ACTIVAR VALIDACIÓN GLOBAL PARA TODOS LOS DTOs

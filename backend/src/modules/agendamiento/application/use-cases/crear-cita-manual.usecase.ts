@@ -72,9 +72,7 @@ export class CrearCitaManualUseCase {
       await this.disponibilidadService.estaEnVentanaPermitida(fechaCita);
 
     if (!enVentana) {
-      this.logger.warn(
-        `Fecha fuera de ventana permitida: ${dto.fechaHora}`,
-      );
+      this.logger.warn(`Fecha fuera de ventana permitida: ${dto.fechaHora}`);
 
       throw new BadRequestException(
         'La fecha seleccionada está fuera del rango permitido por la clínica',
@@ -85,12 +83,46 @@ export class CrearCitaManualUseCase {
     const paciente = await this.pacientePort.obtenerPorId(dto.pacienteId);
 
     if (!paciente || !paciente.activo) {
-      this.logger.warn(
-        `Paciente inválido o inactivo: ${dto.pacienteId}`,
-      );
+      this.logger.warn(`Paciente inválido o inactivo: ${dto.pacienteId}`);
 
       throw new BadRequestException('Paciente no válido o inactivo');
     }
+
+    // --- NUEVA VALIDACIÓN: Unicidad de Cita por Paciente ---
+    const soloAnio = fechaCita.getFullYear();
+    const soloMes = fechaCita.getMonth();
+    const soloDia = fechaCita.getDate();
+
+    const citasDelPaciente = await this.citaRepository.buscarPorPaciente(
+      dto.pacienteId,
+    );
+
+    const yaTieneCitaEseDia =
+      Array.isArray(citasDelPaciente) &&
+      citasDelPaciente.some((citaObj: unknown) => {
+        const cita = citaObj as Record<string, any>;
+        
+        const fechaExistente = new Date(cita['fechaHora'] || cita['fecha_hora']);
+
+        const mismoDia =
+          fechaExistente.getFullYear() === soloAnio &&
+          fechaExistente.getMonth() === soloMes &&
+          fechaExistente.getDate() === soloDia;
+
+        const estadoDetectado = cita['estado'] || cita['estadoCita'] || cita['estado_cita'];
+
+        return mismoDia && estadoDetectado !== EstadoCita.CANCELADA;
+      });
+
+    if (yaTieneCitaEseDia) {
+      this.logger.warn(
+        `El paciente ${dto.pacienteId} ya tiene una cita activa agendada para el día ${soloAnio}-${soloMes + 1}-${soloDia}`,
+      );
+      throw new BadRequestException(
+        'El paciente ya cuenta con una cita agendada para este mismo día.',
+      );
+    }
+    // --- FIN DE NUEVA VALIDACIÓN ---
 
     // 5. Validar especialista
     const especialista = await this.especialistaPort.obtenerPorId(
@@ -98,9 +130,7 @@ export class CrearCitaManualUseCase {
     );
 
     if (!especialista || !especialista.activo) {
-      this.logger.warn(
-        `Especialista no disponible: ${dto.especialistaId}`,
-      );
+      this.logger.warn(`Especialista no disponible: ${dto.especialistaId}`);
 
       throw new BadRequestException('Especialista no disponible');
     }
@@ -176,11 +206,11 @@ export class CrearCitaManualUseCase {
 
     const minutosCitaFin = minutosCitaInicio + duracionNueva;
 
-    const minutosLimiteInicio = hInicio * 60 + mInicio;
+    const minutesLimiteInicio = hInicio * 60 + mInicio;
     const minutosLimiteFin = hFin * 60 + mFin;
 
     if (
-      minutosCitaInicio < minutosLimiteInicio ||
+      minutosCitaInicio < minutesLimiteInicio ||
       minutosCitaFin > minutosLimiteFin
     ) {
       this.logger.warn(
@@ -212,9 +242,7 @@ export class CrearCitaManualUseCase {
         `Conflicto de horario para especialista ${dto.especialistaId} en ${dto.fechaHora}`,
       );
 
-      throw new BadRequestException(
-        'El horario ya está ocupado por otra cita',
-      );
+      throw new BadRequestException('El horario ya está ocupado por otra cita');
     }
 
     // 10. Crear cita
@@ -230,16 +258,12 @@ export class CrearCitaManualUseCase {
 
     await this.citaRepository.guardar(cita);
 
-    this.logger.log(
-      `Cita creada correctamente con id ${cita.id}`,
-    );
+    this.logger.log(`Cita creada correctamente con id ${cita.id}`);
 
     return cita;
   }
 
   private calcularDuracion(tipo: TipoCita, intervaloBase: number): number {
-    return tipo === TipoCita.PRIMERA_VEZ
-      ? intervaloBase + 10
-      : intervaloBase;
+    return tipo === TipoCita.PRIMERA_VEZ ? intervaloBase + 10 : intervaloBase;
   }
 }

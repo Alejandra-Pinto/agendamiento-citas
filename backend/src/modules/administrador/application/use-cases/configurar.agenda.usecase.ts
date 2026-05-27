@@ -1,4 +1,9 @@
-import { Injectable } from '@nestjs/common';
+/* eslint-disable prettier/prettier */
+import {
+  Injectable,
+  Logger,
+} from '@nestjs/common';
+
 import {
   EspecialistaAgendaPort,
   HorarioData,
@@ -6,14 +11,39 @@ import {
 
 @Injectable()
 export class ConfigurarAgendaUseCase {
-  constructor(private readonly especialistaPort: EspecialistaAgendaPort) {}
+  private readonly logger = new Logger(
+    ConfigurarAgendaUseCase.name,
+  );
 
-  async execute(id: string, intervalo: number, horario: HorarioData) {
-    // Aquí podrías poner lógica propia del administrador si fuera necesario
-    return await this.especialistaPort.actualizarConfiguracion(
-      id,
-      intervalo,
-      horario,
+  constructor(
+    private readonly especialistaPort: EspecialistaAgendaPort,
+  ) {}
+
+  async execute(
+    id: string,
+    intervalo: number,
+    horario: HorarioData,
+  ) {
+
+    this.logger.log(
+      `Configurando agenda del especialista ${id}`,
     );
+
+    this.logger.log(
+      `Nuevo intervalo de atención: ${intervalo} minutos`,
+    );
+
+    const resultado =
+      await this.especialistaPort.actualizarConfiguracion(
+        id,
+        intervalo,
+        horario,
+      );
+
+    this.logger.log(
+      `Agenda del especialista ${id} configurada correctamente`,
+    );
+
+    return resultado;
   }
 }

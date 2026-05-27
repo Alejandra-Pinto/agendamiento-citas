@@ -1,14 +1,23 @@
+/* eslint-disable prettier/prettier */
 // src/modules/agendamiento/application/use-cases/exportar-citas.use-case.ts
-import { Inject, Injectable } from '@nestjs/common';
+
+import {
+  Inject,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
+
 import type { CitaRepository } from '../../domain/repositories/cita.repository';
 import { ExportadorCitasPort } from '../../domain/ports/exportador-citas.port';
 
 @Injectable()
 export class ExportarCitasUseCase {
+  private readonly logger = new Logger(ExportarCitasUseCase.name);
+
   constructor(
     @Inject('CitaRepository')
     private readonly citaRepository: CitaRepository,
-    // Eliminamos @Inject string porque usamos la clase abstracta como token
+
     private readonly exportador: ExportadorCitasPort,
   ) {}
 
@@ -17,16 +26,32 @@ export class ExportarCitasUseCase {
     fecha: string,
     formato: 'pdf' | 'excel',
   ): Promise<Buffer> {
-    // <--- CRÍTICO: Define el tipo de retorno aquí
+
+    this.logger.log(
+      `Iniciando exportación de citas para especialista ${especialistaId} en formato ${formato}`,
+    );
+
     const citas = await this.citaRepository.buscarPorProfesionalYFecha(
       especialistaId,
       fecha,
     );
 
-    // El linter ahora sabe que esto devuelve un Buffer
+    this.logger.log(
+      `Se encontraron ${citas.length} citas para exportar`,
+    );
+
     if (formato === 'excel') {
+
+      this.logger.log(
+        `Generando archivo Excel para especialista ${especialistaId}`,
+      );
+
       return await this.exportador.generarExcel(citas);
     }
+
+    this.logger.log(
+      `Generando archivo PDF para especialista ${especialistaId}`,
+    );
 
     return await this.exportador.generarPdf(citas);
   }

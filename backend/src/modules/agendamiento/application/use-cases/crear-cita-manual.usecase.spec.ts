@@ -3,6 +3,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { CrearCitaManualUseCase } from './crear-cita-manual.usecase';
 import { BadRequestException } from '@nestjs/common';
+import { Cita, EstadoCita, TipoCita } from '../../domain/entities/cita.entity';
 
 describe('CrearCitaManualUseCase', () => {
   let useCase: CrearCitaManualUseCase;
@@ -12,7 +13,11 @@ describe('CrearCitaManualUseCase', () => {
   let mockPacientePort: any;
 
   beforeEach(() => {
-    mockRepo = { buscarPorProfesionalYFecha: jest.fn(), guardar: jest.fn() };
+    mockRepo = { 
+      buscarPorProfesionalYFecha: jest.fn(), 
+      guardar: jest.fn(),
+      buscarPorPaciente: jest.fn().mockResolvedValue([]), // <-- Comportamiento por defecto para que no falle ningún test previo
+    };
     mockDispService = {
       estaEnVentanaPermitida: jest.fn().mockResolvedValue(true),
       existeConflicto: jest.fn().mockReturnValue(false),
@@ -67,6 +72,40 @@ describe('CrearCitaManualUseCase', () => {
 
     await expect(useCase.ejecutar(dto)).rejects.toThrow(
       /La doctora no atiende los Martes/,
+    );
+  });
+
+  it('debería lanzar un error si el paciente ya tiene una cita activa asignada para el mismo día', async () => {
+    // Definimos datos válidos para bypass de las primeras validaciones
+    mockPacientePort.obtenerPorId.mockResolvedValue({ activo: true });
+    
+    // Configuramos una fecha futura simulada
+    const fechaCitaExistente = new Date('2026-06-15T10:00:00.000Z');
+    const fechaNuevaCita = new Date('2026-06-15T15:00:00.000Z'); // Mismo día, diferente hora
+
+    // Creamos la instancia de la cita que el paciente ya tiene reservada ese día
+    const citaExistente = new Cita(
+      'cita-existente-id',
+      'p1',
+      'e1', // Supongamos que es con la Doctora 1
+      fechaCitaExistente,
+      20,
+      TipoCita.CONTROL,
+      EstadoCita.PROGRAMADA
+    );
+
+    // Hacemos que el repositorio devuelva la cita que colisiona en fecha
+    mockRepo.buscarPorPaciente.mockResolvedValue([citaExistente]);
+
+    const dto = {
+      pacienteId: 'p1',
+      especialistaId: 'e2', // Intenta con la Doctora 2 (Especialista diferente)
+      fechaHora: fechaNuevaCita.toISOString(),
+      tipo: 'CONTROL',
+    } as any;
+
+    await expect(useCase.ejecutar(dto)).rejects.toThrow(
+      'El paciente ya cuenta con una cita agendada para este mismo día.',
     );
   });
 });
