@@ -76,11 +76,11 @@ export class CrearPacienteDto {
 
   @ApiProperty({
     example: 'Password123',
-    description: 'Contraseña del paciente (mínimo 8 caracteres)',
-    minLength: 8,
+    description: 'Contraseña del paciente (mínimo 6 caracteres)',
+    minLength: 6,
   })
   @IsString()
-  @MinLength(8)
+  @MinLength(6)
   @Exclude({ toPlainOnly: true })
   password: string;
 }
