@@ -57,10 +57,10 @@
 
               <div class="space-y-3">
                 <label class="text-[10px] uppercase tracking-widest font-bold text-slate-500">Tipo de Consulta</label>
-                <div class="flex gap-4">
+                <div class="flex flex-col sm:flex-row gap-4">
                   <button
                     type="button"
-                    class="flex-1 flex items-center justify-center gap-2 py-4 rounded-xl border-2 transition-all font-bold"
+                    class="w-full sm:flex-1 flex items-center justify-center gap-2 py-4 rounded-xl border-2 transition-all font-bold"
                     [ngClass]="formData.tipo === 'PRIMERA_VEZ' ? 'border-blue-600 bg-blue-50 text-blue-600' : 'border-slate-200 bg-white text-slate-500'"
                     (click)="formData.tipo = 'PRIMERA_VEZ'"
                   >
@@ -69,7 +69,7 @@
                   </button>
                   <button
                     type="button"
-                    class="flex-1 flex items-center justify-center gap-2 py-4 rounded-xl border-2 transition-all font-bold"
+                    class="w-full sm:flex-1 flex items-center justify-center gap-2 py-4 rounded-xl border-2 transition-all font-bold"
                     [ngClass]="formData.tipo === 'CONTROL' ? 'border-blue-600 bg-blue-50 text-blue-600' : 'border-slate-200 bg-white text-slate-500'"
                     (click)="formData.tipo = 'CONTROL'"
                   >
@@ -78,7 +78,6 @@
                   </button>
                 </div>
               </div>
-
               <app-especialista-selector
                 [especialistas]="especialistas"
                 [seleccionadoId]="formData.especialistaid"

@@ -281,14 +281,19 @@ export class Agendamiento implements OnInit {
           : err.error?.message || 'Error de conexión';
 
         const esFechaPasada = msg.toLowerCase().includes('pasado');
+        
+        // DETECCIÓN DE LA NUEVA REGLA DE NEGOCIO (Doble cita el mismo día)
+        const esCitaDuplicadaDia = msg.toLowerCase().includes('ya cuenta con una cita');
+
         const esAdvertencia =
+          esCitaDuplicadaDia || // <-- Integrada aquí para que use el color amarillo
           msg.toLowerCase().includes('atiende') ||
           msg.toLowerCase().includes('ventana') ||
           msg.toLowerCase().includes('rango');
 
         Swal.fire({
           icon: esFechaPasada ? 'error' : esAdvertencia ? 'warning' : 'error',
-          title: esFechaPasada ? 'Fecha Inválida' : esAdvertencia ? 'Atención' : 'Error',
+          title: esFechaPasada ? 'Fecha Inválida' : esCitaDuplicadaDia ? 'Paciente con Cita' : esAdvertencia ? 'Atención' : 'Error',
           text: msg,
           confirmButtonColor: esFechaPasada ? '#ef4444' : esAdvertencia ? '#f59e0b' : '#ef4444',
         });
