@@ -10,6 +10,7 @@ import { AdministradorModule } from './modules/administrador/administrador.modul
 import { AutenticacionModule } from './modules/autenticacion/autenticacion.module';
 import { HistoriaClinicaModule } from './modules/historia-clinica/historia-clinica.module';
 import { AuditoriaModule } from './modules/auditoria/auditoria.module';
+import { HealthModule } from './health/health.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { AuditoriaModule } from './modules/auditoria/auditoria.module';
     AutenticacionModule,
     HistoriaClinicaModule,
     AuditoriaModule,
+    HealthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
