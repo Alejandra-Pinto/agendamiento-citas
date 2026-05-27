@@ -39,7 +39,7 @@ export class FinalizarCitaUseCase {
     // Si la cita está agendada para después de hoy, rebotamos la acción
     if (fechaCita > finDeHoy) {
       throw new BadRequestException(
-        'No puedes finalizar una cita de un día futuro',
+        'No puedes finalizar una cita de un día futuro', // <-- Deja este texto exacto
       );
     }
 

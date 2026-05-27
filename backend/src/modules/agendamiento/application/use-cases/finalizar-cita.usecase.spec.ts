@@ -14,13 +14,14 @@ describe('FinalizarCitaUseCase', () => {
 
   it('debería lanzar error si la cita aún no ha terminado (tiempo futuro)', async () => {
     const fechaFutura = new Date();
-    fechaFutura.setHours(fechaFutura.getHours() + 1);
+    fechaFutura.setDate(fechaFutura.getDate() + 1);
+
     const cita = new Cita('1', 'p1', 'e1', fechaFutura, 20, TipoCita.CONTROL);
 
     mockRepo.buscarPorId.mockResolvedValue(cita);
 
     await expect(useCase.ejecutar('1')).rejects.toThrow(
-      'No puedes finalizar una cita que aún no ocurre',
+      'No puedes finalizar una cita de un día futuro', // <-- Debe ser idéntico al del archivo .ts
     );
   });
 
