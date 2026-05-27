@@ -28,8 +28,7 @@ export function initializeKeycloak(keycloak: KeycloakService) {
         clientId: 'frontend-clinica',
       },
       initOptions: {
-        onLoad: 'check-sso',
-        silentCheckSsoRedirectUri: window.location.origin + '/assets/silent-check-sso.html',
+        onLoad: 'login-required',
         checkLoginIframe: false
       },
       enableBearerInterceptor: true,
