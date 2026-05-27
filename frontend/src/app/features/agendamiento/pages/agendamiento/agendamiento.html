@@ -13,9 +13,17 @@
 
             <div class="p-8 space-y-6">
               <div class="grid grid-cols-1 md:grid-cols-2 gap-6 relative">
-                <!-- CAMPO CÉDULA -->
                 <div class="space-y-2 relative">
-                  <label class="text-[10px] uppercase tracking-widest font-bold text-slate-500">Cédula del Paciente</label>
+                  <div class="flex justify-between items-center">
+                    <label class="text-[11px] uppercase tracking-widest font-bold text-slate-500">Cédula del Paciente</label>
+                    <button type="button" 
+                            (click)="mostrarModalRegistro = true"
+                            class="text-[13px] text-blue-600 font-bold hover:underline flex items-center gap-1">
+                      <span class="material-symbols-outlined text-xs">person_add</span>
+                      ¿Paciente nuevo? <u>Registrar</u>
+                    </button>
+                  </div>
+                  
                   <input
                     type="text"
                     [(ngModel)]="formData.cedula"
@@ -24,7 +32,6 @@
                     placeholder="Escriba al menos 3 dígitos de la CC..."
                   />
                   
-                  <!-- PANEL DE SUGERENCIAS (Se muestra si hay resultados) -->
                   <div *ngIf="sugerencias && sugerencias.length > 0"
                       class="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-2xl overflow-hidden">
                     <div *ngFor="let p of sugerencias" 
@@ -36,9 +43,8 @@
                   </div>
                 </div>
 
-                <!-- CAMPO NOMBRE -->
                 <div class="space-y-2">
-                  <label class="text-[10px] uppercase tracking-widest font-bold text-slate-500">Nombre del Paciente</label>
+                  <label class="text-[11px] uppercase tracking-widest font-bold text-slate-500">Nombre del Paciente</label>
                   <input
                     type="text"
                     [(ngModel)]="formData.nombre"
@@ -50,18 +56,12 @@
               </div>
 
               <div class="space-y-3">
-                <label class="text-[10px] uppercase tracking-widest font-bold text-slate-500"
-                  >Tipo de Consulta</label
-                >
+                <label class="text-[11px] uppercase tracking-widest font-bold text-slate-500">Tipo de Consulta</label>
                 <div class="flex gap-4">
                   <button
                     type="button"
                     class="flex-1 flex items-center justify-center gap-2 py-4 rounded-xl border-2 transition-all font-bold"
-                    [ngClass]="
-                      formData.tipo === 'PRIMERA_VEZ'
-                        ? 'border-blue-600 bg-blue-50 text-blue-600'
-                        : 'border-slate-200 bg-white text-slate-500'
-                    "
+                    [ngClass]="formData.tipo === 'PRIMERA_VEZ' ? 'border-blue-600 bg-blue-50 text-blue-600' : 'border-slate-200 bg-white text-slate-500'"
                     (click)="formData.tipo = 'PRIMERA_VEZ'"
                   >
                     <span class="material-symbols-outlined">medical_information</span>
@@ -70,11 +70,7 @@
                   <button
                     type="button"
                     class="flex-1 flex items-center justify-center gap-2 py-4 rounded-xl border-2 transition-all font-bold"
-                    [ngClass]="
-                      formData.tipo === 'CONTROL'
-                        ? 'border-blue-600 bg-blue-50 text-blue-600'
-                        : 'border-slate-200 bg-white text-slate-500'
-                    "
+                    [ngClass]="formData.tipo === 'CONTROL' ? 'border-blue-600 bg-blue-50 text-blue-600' : 'border-slate-200 bg-white text-slate-500'"
                     (click)="formData.tipo = 'CONTROL'"
                   >
                     <span class="material-symbols-outlined">history</span>
@@ -82,7 +78,6 @@
                   </button>
                 </div>
               </div>
-
 
               <app-especialista-selector
                 [especialistas]="especialistas"
@@ -101,18 +96,13 @@
                     (horaChange)="formData.hora = $event"
                   ></app-horario-selector>
                 </div>
-              }@else {
+              } @else {
                 <div class="p-4 border-2 border-dashed border-slate-400 rounded-xl text-center">
                   <p class="text-sm text-slate-500 font-medium">
                     Seleccione un especialista para ver su disponibilidad de horarios.
                   </p>
                 </div>
               }
-              
-
-              
-
-
             </div>
 
             <app-form-actions
@@ -125,12 +115,32 @@
 
         <div class="col-span-12 lg:col-span-4 space-y-6">
           <app-paciente-resumen [paciente]="pacienteEncontrado"></app-paciente-resumen>
-
           <div>
             <app-disponibilidad-doctores></app-disponibilidad-doctores>
           </div>
         </div>
       </div>
     </div>
+  </div>
+</div>
+
+<div *ngIf="mostrarModalRegistro" 
+     class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+  
+  <div class="relative w-full max-w-xl max-h-[85vh] bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-100 flex flex-col">
+    
+    <button (click)="mostrarModalRegistro = false" 
+            type="button"
+            class="absolute top-4 right-4 z-50 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-all shadow-sm bg-white/95 backdrop-blur-sm">
+      <span class="material-symbols-outlined flex items-center justify-center">close</span>
+    </button>
+
+    <div class="overflow-y-auto p-2 w-full custom-modal-body">
+      <app-registro 
+        [modoAdministrativo]="true" 
+        (pacienteRegistrado)="manejarPacienteCreadoDesdeModal($event)">
+      </app-registro>
+    </div>
+
   </div>
 </div>

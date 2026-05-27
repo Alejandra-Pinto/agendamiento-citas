@@ -1,18 +1,33 @@
-<div class="flex flex-col md:flex-row min-h-screen bg-surface">
-  <app-branding-side class="hidden md:flex md:w-[35%] lg:w-[30%]"></app-branding-side>
+<div [class]="modoAdministrativo 
+     ? 'w-full bg-white flex flex-col' 
+     : 'flex flex-col md:flex-row min-h-screen bg-surface'">
 
-  <div class="flex-grow p-6 md:p-12 lg:p-16 flex items-center justify-center overflow-y-auto relative">
+  @if (!modoAdministrativo) {
+    <app-branding-side class="hidden md:flex md:w-[35%] lg:w-[30%]"></app-branding-side>
+  }
+
+  <div [class]="modoAdministrativo 
+       ? 'w-full p-4 flex items-center justify-center' 
+       : 'flex-grow p-6 md:p-12 lg:p-16 flex items-center justify-center overflow-y-auto relative'">
     
-    <a href="http://localhost:4200" 
-       class="md:hidden absolute top-6 left-6 p-3 bg-white rounded-xl shadow-sm border border-slate-100 text-slate-400 active:scale-95 transition-all">
-      <span class="material-symbols-outlined">home</span>
-    </a>
+    @if (!modoAdministrativo) {
+      <a href="http://localhost:4200" 
+         class="md:hidden absolute top-6 left-6 p-3 bg-white rounded-xl shadow-sm border border-slate-100 text-slate-400 active:scale-95 transition-all">
+        <span class="material-symbols-outlined">home</span>
+      </a>
+    }
 
-    <div class="w-full max-w-xl bg-white p-8 md:p-10 rounded-3xl shadow-xl border border-outline/30">
+    <div [class]="modoAdministrativo 
+         ? 'w-full max-w-full bg-white' 
+         : 'w-full max-w-xl bg-white p-8 md:p-10 rounded-3xl shadow-xl border border-outline/30'">
       
-      <div class="mb-8 text-center md:text-left">
-        <h1 class="text-3xl font-extrabold text-slate-800 tracking-tight mb-2">Crear mi cuenta</h1>
-        <p class="text-slate-500 text-sm">Regístrese para acceder a sus citas médicas en Piedra Azul.</p>
+      <div class="mb-6 text-center md:text-left">
+        <h1 class="text-2xl font-extrabold text-slate-800 tracking-tight mb-1">
+          {{ modoAdministrativo ? 'Registrar Paciente Nuevo' : 'Crear mi cuenta' }}
+        </h1>
+        <p class="text-slate-500 text-sm">
+          {{ modoAdministrativo ? 'Ingrese los datos básicos del paciente para agendar la consulta.' : 'Regístrese para acceder a sus citas médicas en Piedra Azul.' }}
+        </p>
       </div>
 
       <form [formGroup]="registroForm" (ngSubmit)="onSubmit()" class="space-y-4">
@@ -91,8 +106,8 @@
           </div>
         }
 
-        <div class="pt-4 text-center space-y-4">
-          <button [disabled]="registroForm.invalid || cargando" class="btn-principal">
+        <div class="pt-2 text-center space-y-4">
+          <button [disabled]="registroForm.invalid || cargando" class="btn-principal w-full">
             {{ cargando ? 'REGISTRANDO...' : (modoAdministrativo ? 'REGISTRAR PACIENTE' : 'CREAR MI EXPEDIENTE') }}
             <span class="material-symbols-outlined">how_to_reg</span>
           </button>

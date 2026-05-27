@@ -12,6 +12,7 @@ import { NgModel } from '@angular/forms';
 import { DisponibilidadDoctores } from '../../componentes/disponibilidad-doctores/disponibilidad-doctores';
 import { PacienteService } from '../../../../core/services/paciente.service';
 import { AdminService } from '../../../../core/services/admin.service';
+import { RegistroPage } from "../../../registrarse/pages/registro/registro";
 
 @Component({
   selector: 'app-agendamiento',
@@ -23,8 +24,9 @@ import { AdminService } from '../../../../core/services/admin.service';
     EspecialistaSelectorComponent,
     HorarioSelectorComponent,
     FormActionsComponent,
-    DisponibilidadDoctores
-  ],
+    DisponibilidadDoctores,
+    RegistroPage
+],
   templateUrl: './agendamiento.html',
   styleUrl: './agendamiento.scss',
 })
