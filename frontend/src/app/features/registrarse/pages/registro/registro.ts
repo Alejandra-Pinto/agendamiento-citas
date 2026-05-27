@@ -1,4 +1,4 @@
-import { Component, inject, Input, OnInit, signal } from '@angular/core'; // Usamos signals para el ojo
+import { Component, EventEmitter, inject, Input, OnInit, Output, signal } from '@angular/core'; // Usamos signals para el ojo
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
@@ -14,6 +14,7 @@ import { AuthStateService } from '../../../../core/services/auth-state.service';
 })
 export class RegistroPage implements OnInit {
   @Input() modoAdministrativo: boolean = false; // Para diferenciar entre registro normal y desde admin
+  @Output() pacienteRegistrado = new EventEmitter<any>();
 
   registroForm: FormGroup;
   errorMensaje: string | null = null;
@@ -91,20 +92,32 @@ export class RegistroPage implements OnInit {
       this.cargando = true;
       const rawValues = { ...this.registroForm.value };
 
-      // LÓGICA DE CONTRASEÑA TEMPORAL
       if (this.modoAdministrativo) {
-        rawValues.password = rawValues.documento; // Password = Documento
+        rawValues.password = rawValues.documento;
       }
 
       delete rawValues.confirmarPassword;
       delete rawValues.terminos;
 
       this.pacienteService.crearPaciente(rawValues).subscribe({
-        next: () => {
-          // Si es administrativo, quizás quieras limpiar el formulario o cerrar un modal
-          // Si es público, va al login
-          if (!this.modoAdministrativo) this.router.navigate(['/login']);
+        next: (pacienteCreado) => {
           this.cargando = false;
+          
+          if (!this.modoAdministrativo) {
+            // Flujo público normal
+            this.router.navigate(['/login']);
+          } else {
+            // FLUJO ADMINISTRATIVO: Avisamos al componente padre enviando los datos
+            
+            const datosPaciente = pacienteCreado || {
+              nombres: rawValues.nombres,
+              apellidos: rawValues.apellidos,
+              documento: rawValues.documento
+            };
+            
+            this.pacienteRegistrado.emit(datosPaciente);
+            this.registroForm.reset({ generoP: 'MASCULINO' }); // Limpiamos el formulario para la próxima
+          }
         },
         error: (err) => {
           this.cargando = false;

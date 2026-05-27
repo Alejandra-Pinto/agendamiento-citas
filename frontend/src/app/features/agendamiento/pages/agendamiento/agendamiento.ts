@@ -46,6 +46,9 @@ export class Agendamiento implements OnInit {
   // Agrega una variable para guardar el límite
   ventanaSemanas: number = 4; // Valor por defecto
 
+  // Propiedad para abrir/cerrar el modal flotante
+  mostrarModalRegistro = false;
+
   constructor(
     private citasService: CitasService,
     private especialistaService: EspecialistaService,
@@ -447,5 +450,33 @@ export class Agendamiento implements OnInit {
     const esValido = diasConfigurados.includes(diaNombreActual);
 
     return esValido;
+  }
+
+  /**
+   * Captura el evento emitido por el componente de registro rápido
+   */
+  manejarPacienteCreadoDesdeModal(paciente: any) {
+    // 1. Cerramos el modal inmediatamente
+    this.mostrarModalRegistro = false;
+
+    // 2. Auto-rellenamos los datos en el modelo del formulario de agendamiento
+    this.formData.cedula = paciente.documento;
+    this.formData.nombre = `${paciente.nombres} ${paciente.apellidos}`;
+
+    // 3. Vinculamos el objeto al componente de resumen de tarjeta lateral derecho
+    this.pacienteEncontrado = paciente;
+
+    // 4. Limpiamos cualquier residuo de la lista de sugerencias de búsqueda
+    this.sugerencias = [];
+
+    // 5. Desplegamos la confirmación visual e interactiva usando SweetAlert
+    Swal.fire({
+      icon: 'success',
+      title: '¡Paciente Registrado!',
+      text: `${paciente.nombres} ya está en la base de datos de Piedra Azul. Puede proceder a seleccionar el horario de la cita.`,
+      confirmButtonColor: '#2563EB', // Color azul-600 de Tailwind
+      timer: 3500,
+      timerProgressBar: true
+    });
   }
 }
