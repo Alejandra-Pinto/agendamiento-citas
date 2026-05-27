@@ -1,6 +1,12 @@
+/* eslint-disable prettier/prettier */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
-import { Inject, Injectable } from '@nestjs/common';
-import { BadRequestException } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  Logger,
+  BadRequestException,
+} from '@nestjs/common';
+
 import type { PacienteRepository } from '../../domain/repositories/paciente.repository';
 import { CrearPacienteDto } from '../dto/crear-paciente.dto';
 import { Paciente } from '../../domain/entities/paciente.entity';
@@ -9,43 +15,84 @@ import type { IdentidadRepository } from '../../domain/repositories/identidad.re
 
 @Injectable()
 export class CrearPacienteUseCase {
+  private readonly logger = new Logger(
+    CrearPacienteUseCase.name,
+  );
+
   constructor(
     @Inject('PacienteRepository')
     private readonly pacienteRepository: PacienteRepository,
+
     private readonly validacion: ValidacionPacienteService,
-    @Inject('IdentidadRepository') // <--- Nuevo puerto
+
+    @Inject('IdentidadRepository')
     private readonly identidadRepository: IdentidadRepository,
   ) {}
 
   async ejecutar(dto: CrearPacienteDto) {
-    // Validaciones de reglas de negocio
+
+    this.logger.log(
+      `Intentando crear paciente con documento ${dto.documento}`,
+    );
+
+    // Validaciones
     this.validacion.validarDocumento(dto.documento);
+
     this.validacion.validarCelular(dto.celular);
 
-    const existente = await this.pacienteRepository.findById(dto.documento);
+    this.logger.log(
+      `Validaciones completadas para paciente ${dto.documento}`,
+    );
+
+    // Verificar existencia
+    const existente =
+      await this.pacienteRepository.findById(
+        dto.documento,
+      );
 
     if (existente) {
-      throw new BadRequestException('El paciente ya existe');
+
+      this.logger.warn(
+        `Intento de crear paciente duplicado con documento ${dto.documento}`,
+      );
+
+      throw new BadRequestException(
+        'El paciente ya existe',
+      );
     }
 
-    // 1. Intentar crear en Keycloak
+    // Crear usuario en Keycloak
     try {
+
+      this.logger.log(
+        `Creando usuario en Keycloak para paciente ${dto.documento}`,
+      );
+
       await this.identidadRepository.crearUsuario(
-        dto.documento, // El username siempre será la cédula/documento
+        dto.documento,
         dto.password,
         dto.nombres,
         dto.apellidos,
         'PACIENTE',
-        dto.email, // Se envía si existe, si no, llega como undefined
+        dto.email,
       );
+
+      this.logger.log(
+        `Usuario Keycloak creado correctamente para paciente ${dto.documento}`,
+      );
+
     } catch (error: any) {
-      // Si el email ya existe en Keycloak o hay error de red, aquí se detiene
+
+      this.logger.error(
+        `Error al crear usuario Keycloak para paciente ${dto.documento}: ${error.message}`,
+      );
+
       throw new BadRequestException(
         `Error en Keycloak: ${error.message || 'Error desconocido'}`,
       );
     }
 
-    // 2. Si Keycloak fue exitoso, guardamos en SQL
+    // Crear entidad paciente
     const paciente = new Paciente(
       dto.documento,
       dto.nombres,
@@ -56,7 +103,13 @@ export class CrearPacienteUseCase {
       dto.email,
     );
 
+    // Guardar en SQL
     await this.pacienteRepository.save(paciente);
+
+    this.logger.log(
+      `Paciente ${dto.documento} creado correctamente en base de datos`,
+    );
+
     return paciente;
   }
 }

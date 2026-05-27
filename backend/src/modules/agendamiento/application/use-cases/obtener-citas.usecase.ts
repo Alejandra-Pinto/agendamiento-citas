@@ -1,49 +1,125 @@
-import { Inject, Injectable } from '@nestjs/common';
+/* eslint-disable prettier/prettier */
+import {
+  Inject,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
+
 import { Cita, EstadoCita } from '../../domain/entities/cita.entity';
 import type { CitaRepository } from '../../domain/repositories/cita.repository';
-import { ConsultarCitasDto, TipoConsultaCita } from '../dto/consultar-cita.dto';
+import {
+  ConsultarCitasDto,
+  TipoConsultaCita,
+} from '../dto/consultar-cita.dto';
 
 @Injectable()
 export class ObtenerCitasUseCase {
+  private readonly logger = new Logger(
+    ObtenerCitasUseCase.name,
+  );
+
   constructor(
     @Inject('CitaRepository')
     private readonly citaRepository: CitaRepository,
   ) {}
 
   async ejecutar(dto: ConsultarCitasDto): Promise<Cita[]> {
-    // 1. Traemos las citas filtradas desde la DB (ya sea por doctor o por paciente)
+
+    this.logger.log(
+      `Consultando citas con filtros: ${JSON.stringify(dto)}`,
+    );
+
+    // 1. Obtener citas desde DB
     const citas = await this.citaRepository.buscarTodas(dto);
-    // 2. Si venimos buscando un ID específico, devolvemos la primera coincidencia
+
+    this.logger.log(
+      `Se encontraron ${citas.length} citas antes de aplicar filtros`,
+    );
+
+    // 2. Buscar cita específica por ID
     if (dto.id && citas.length > 0) {
-      return [citas[0]]; // Retornamos la cita individual
+
+      this.logger.log(
+        `Consulta específica de cita con ID ${dto.id}`,
+      );
+
+      return [citas[0]];
     }
 
     const ahora = new Date();
-    // 2. Aplicamos el filtro de estado que ya tenías
-    // Esto funcionará igual de bien para el doctor o para el paciente
+
+    // 3. Aplicar filtros
     switch (dto.tipo) {
+
       case TipoConsultaCita.PROXIMAS:
+
+        this.logger.log(
+          'Aplicando filtro de próximas citas',
+        );
+
         return citas.filter(
-          (c) => c.fechaHora > ahora && c.estado === EstadoCita.PROGRAMADA,
+          (c) =>
+            c.fechaHora > ahora &&
+            c.estado === EstadoCita.PROGRAMADA,
         );
 
       case TipoConsultaCita.CANCELADAS:
-        return citas.filter((c) => c.estado === EstadoCita.CANCELADA);
+
+        this.logger.log(
+          'Aplicando filtro de citas canceladas',
+        );
+
+        return citas.filter(
+          (c) => c.estado === EstadoCita.CANCELADA,
+        );
 
       case TipoConsultaCita.PROGRAMADAS:
-        return citas.filter((c) => c.estado === EstadoCita.PROGRAMADA);
+
+        this.logger.log(
+          'Aplicando filtro de citas programadas',
+        );
+
+        return citas.filter(
+          (c) => c.estado === EstadoCita.PROGRAMADA,
+        );
 
       case TipoConsultaCita.REAGENDADAS:
-        return citas.filter((c) => c.estado === EstadoCita.REAGENDADA);
+
+        this.logger.log(
+          'Aplicando filtro de citas reagendadas',
+        );
+
+        return citas.filter(
+          (c) => c.estado === EstadoCita.REAGENDADA,
+        );
 
       case TipoConsultaCita.FINALIZADAS:
-        return citas.filter((c) => c.estado === EstadoCita.FINALIZADA);
+
+        this.logger.log(
+          'Aplicando filtro de citas finalizadas',
+        );
+
+        return citas.filter(
+          (c) => c.estado === EstadoCita.FINALIZADA,
+        );
 
       case TipoConsultaCita.NO_ASISTIO:
-        return citas.filter((c) => c.estado === EstadoCita.NO_ASISTIO);
+
+        this.logger.log(
+          'Aplicando filtro de citas no asistidas',
+        );
+
+        return citas.filter(
+          (c) => c.estado === EstadoCita.NO_ASISTIO,
+        );
 
       case TipoConsultaCita.TODAS:
       default:
+
+        this.logger.log(
+          'Retornando todas las citas sin filtro adicional',
+        );
+
         return citas;
     }
   }
