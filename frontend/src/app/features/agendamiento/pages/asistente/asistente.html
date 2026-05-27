@@ -62,9 +62,9 @@
                 <label
                   class="text-[10px] uppercase tracking-widest font-bold text-slate-500">Tipo
                   de Consulta*</label>
-                <div class="flex gap-4">
+                <div class="flex flex-col sm:flex-row gap-4">
                   <button type="button"
-                    class="flex-1 flex items-center justify-center gap-2 py-4 rounded-xl border-2 transition-all font-bold text-sm"
+                    class="w-full sm:flex-1 flex items-center justify-center gap-2 py-4 rounded-xl border-2 transition-all font-bold text-sm"
                     [ngClass]="tipoCita() === 'PRIMERA_VEZ' ? 'border-blue-600 bg-blue-50 text-blue-600 shadow-sm' : 'border-slate-100 bg-white text-slate-400'"
                     (click)="tipoCita.set('PRIMERA_VEZ')">
                     <span
@@ -72,7 +72,7 @@
                     Primera Cita
                   </button>
                   <button type="button"
-                    class="flex-1 flex items-center justify-center gap-2 py-4 rounded-xl border-2 transition-all font-bold text-sm"
+                    class="w-full sm:flex-1 flex items-center justify-center gap-2 py-4 rounded-xl border-2 transition-all font-bold text-sm"
                     [ngClass]="tipoCita() === 'CONTROL' ? 'border-blue-600 bg-blue-50 text-blue-600 shadow-sm' : 'border-slate-100 bg-white text-slate-400'"
                     (click)="tipoCita.set('CONTROL')">
                     <span
@@ -81,7 +81,6 @@
                   </button>
                 </div>
               </div>
-
               <div class="space-y-3" *ngIf="especialidadElegida()">
                 <app-especialista-selector
                   [especialistas]="doctoresFiltrados()"
@@ -164,12 +163,10 @@
               <div class="flex flex-col gap-2">
                 <span
                   class="text-[10px] text-blue-600 uppercase font-bold tracking-widest">Especialista</span>
-                <!-- En la columna derecha (Resumen) -->
                 <div class="flex items-center gap-3">
                   <span
                     class="material-symbols-outlined text-blue-500 text-xl">person_2</span>
                   <span class="text-slate-700 text-sm font-medium">
-                    <!-- Solo una propiedad, con un respaldo por si acaso -->
                     {{ doctorSeleccionado()?.nombreMostrar ||
                     doctorSeleccionado()?.nombre || 'Médico no seleccionado' }}
                   </span>
