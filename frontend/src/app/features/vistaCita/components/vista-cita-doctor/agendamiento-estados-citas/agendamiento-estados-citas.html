@@ -1,55 +1,54 @@
-<div
-  class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-8">
+<div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-8">
   <div>
-    <h2 class="text-3xl font-black tracking-tight text-on-surface mb-2">Detalle
-      de la Cita</h2>
+    <h2 class="text-3xl font-black tracking-tight text-on-surface mb-2">Detalle de la Cita</h2>
     <p class="text-slate-500 font-medium">
       Gestiona y consulta la información detallada del paciente.
     </p>
   </div>
 
-  <div class="flex flex-wrap gap-2">
+  <div class="flex flex-wrap items-center gap-3">
+    
+    <button 
+      (click)="reagendarPaciente()"
+      [disabled]="estadoActual === 'FINALIZADA'"
+      class="px-4 py-2 bg-green-600 hover:bg-green-500 text-white text-xs font-black rounded-lg shadow-sm flex items-center gap-2 transition-all h-[38px] tracking-wider disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-green-600">
+      <span class="material-symbols-outlined text-sm">calendar_add_on</span>
+      REAGENDAR
+    </button>
+
     <button
       [ngClass]="colorEstado"
-      class="px-4 py-2 rounded-full text-xs font-bold border flex items-center gap-2">
+      class="px-4 py-2 rounded-lg text-xs font-bold border flex items-center gap-2 h-[38px]">
       <span class="w-2 h-2 rounded-full bg-current animate-pulse"></span>
       {{ estadoActual }}
     </button>
 
     <div class="relative group">
       <button
-        class="p-2 bg-white shadow-sm border border-slate-100 rounded-lg flex items-center gap-2 text-sm font-bold text-slate-700 hover:bg-slate-50">
+        class="px-4 py-2 bg-white shadow-sm border border-slate-200 rounded-lg flex items-center gap-2 text-xs font-bold text-slate-700 hover:bg-slate-50 h-[38px]">
         <span class="material-symbols-outlined text-sm">edit</span>
-        Cambiar Estado
+        CAMBIAR ESTADO
       </button>
-      <!-- PROGRAMA -->
-      <div
-        class="absolute right-0 mt-2 w-48 bg-white shadow-xl rounded-xl p-2 border border-slate-100 hidden group-hover:block z-50">
+      
+      <div class="absolute right-0 mt-2 w-48 bg-white shadow-xl rounded-xl p-2 border border-slate-100 hidden group-hover:block z-50">
         <div
-          (click)="cambiarEstado('PROGRAMADA')"
+          (click)="intentarCambioEstado('PROGRAMADA')"
           class="p-2 hover:bg-blue-50 rounded-lg cursor-pointer flex items-center gap-3 text-xs font-bold text-blue-600">
           <span class="w-2 h-2 rounded-full bg-blue-500"></span> PROGRAMADA
         </div>
-        <!-- FINALIZADA -->
         <div
-          (click)="cambiarEstado('FINALIZADA')"
+          (click)="intentarCambioEstado('FINALIZADA')"
           class="p-2 hover:bg-emerald-50 rounded-lg cursor-pointer flex items-center gap-3 text-xs font-bold text-emerald-600">
           <span class="w-2 h-2 rounded-full bg-emerald-500"></span> FINALIZADA
         </div>
-        <!-- REAGENDADA -->
-        <div
-          (click)="cambiarEstado('REAGENDADA')"
-          class="p-2 hover:bg-amber-50 rounded-lg cursor-pointer flex items-center gap-3 text-xs font-bold text-amber-600">
-          <span class="w-2 h-2 rounded-full bg-amber-500"></span> REAGENDADA
-        </div>
         <div class="my-1 border-t border-slate-100"></div>
-        <!-- CANCELADA -->
         <div
-          (click)="cambiarEstado('CANCELADA')"
+          (click)="intentarCambioEstado('CANCELADA')"
           class="p-2 hover:bg-red-50 rounded-lg cursor-pointer flex items-center gap-3 text-xs font-bold text-red-600">
           <span class="w-2 h-2 rounded-full bg-red-500"></span> CANCELADA
         </div>
       </div>
     </div>
+
   </div>
 </div>

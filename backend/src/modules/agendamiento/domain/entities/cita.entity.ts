@@ -41,14 +41,28 @@ export class Cita {
   }
 
   reagendar(nuevaFecha: Date) {
-    if (nuevaFecha <= new Date()) {
-      throw new Error('No se puede reagendar a una fecha pasada');
+    // Comparamos si es la misma fecha y hora original para identificar una reversión de error
+    const esMismaFechaOriginal =
+      new Date(this.fechaHora).getTime() === new Date(nuevaFecha).getTime();
+
+    if (!esMismaFechaOriginal) {
+      // Validaciones estrictas solo si es una reprogramación real (cambio de fecha)
+      if (nuevaFecha <= new Date()) {
+        throw new Error('No se puede reagendar a una fecha pasada');
+      }
+      if (this.estado === EstadoCita.FINALIZADA) {
+        throw new Error('No se puede reagendar una cita ya finalizada');
+      }
+
+      // Si cambia la fecha de verdad, el estado pasa a REAGENDADA
+      this.estado = EstadoCita.REAGENDADA;
+    } else {
+      // Si es una restauración por error (misma fecha), el estado vuelve a estar PROGRAMADA
+      this.estado = EstadoCita.PROGRAMADA;
     }
-    if (this.estado === EstadoCita.FINALIZADA) {
-      throw new Error('No se puede reagendar una cita ya finalizada');
-    }
+
+    // La fecha se sobrescribe (si es la misma, se mantiene idéntica)
     this.fechaHora = nuevaFecha;
-    this.estado = EstadoCita.REAGENDADA;
   }
 
   finalizar() {

@@ -28,13 +28,18 @@ export class FinalizarCitaUseCase {
       throw new BadRequestException('No puedes finalizar esta cita');
     }
 
-    const ahora = new Date().getTime();
-    const inicio = new Date(cita.fechaHora).getTime();
-    const fin = inicio + cita.duracion * 60000;
+    // --- MODIFICACIÓN DE LA REGLA (OPCIÓN A) ---
+    // Creamos un objeto con la fecha/hora actual y calculamos el límite del día de hoy (23:59:59)
+    const finDeHoy = new Date();
+    finDeHoy.setHours(23, 59, 59, 999);
 
-    if (ahora < fin) {
+    // Convertimos la fecha de la cita para evaluar su día
+    const fechaCita = new Date(cita.fechaHora);
+
+    // Si la cita está agendada para después de hoy, rebotamos la acción
+    if (fechaCita > finDeHoy) {
       throw new BadRequestException(
-        'No puedes finalizar una cita que aún no ocurre',
+        'No puedes finalizar una cita de un día futuro',
       );
     }
 

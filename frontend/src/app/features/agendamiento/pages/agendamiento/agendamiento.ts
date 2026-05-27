@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router'; // Importación tuya integrada
 import { CitasService } from '../../../../core/services/citas-service';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -8,10 +9,10 @@ import { EspecialistaService } from '../../../../core/services/especialista.serv
 import { HorarioSelectorComponent } from '../../componentes/horario-selector/horario-selector';
 import { FormActionsComponent } from '../../componentes/form-actions/form-actions';
 import Swal from 'sweetalert2';
-import { NgModel } from '@angular/forms';
 import { DisponibilidadDoctores } from '../../componentes/disponibilidad-doctores/disponibilidad-doctores';
 import { PacienteService } from '../../../../core/services/paciente.service';
 import { AdminService } from '../../../../core/services/admin.service';
+import { RegistroPage } from "../../../registrarse/pages/registro/registro";
 
 @Component({
   selector: 'app-agendamiento',
@@ -23,7 +24,8 @@ import { AdminService } from '../../../../core/services/admin.service';
     EspecialistaSelectorComponent,
     HorarioSelectorComponent,
     FormActionsComponent,
-    DisponibilidadDoctores
+    DisponibilidadDoctores,
+    RegistroPage
   ],
   templateUrl: './agendamiento.html',
   styleUrl: './agendamiento.scss',
@@ -33,6 +35,7 @@ export class Agendamiento implements OnInit {
   horarios: any[] = [];
   intentoEnvio: boolean = false;
   pacienteEncontrado: any = null;
+  sugerencias: any[] = [];
 
   formData = {
     cedula: '',
@@ -40,13 +43,14 @@ export class Agendamiento implements OnInit {
     especialistaid: '',
     fecha: '',
     hora: '',
-    tipo: '',
+    tipo: 'CONTROL', // Mantiene tu valor por defecto para flujos post-consulta
   };
 
-  // Agrega una variable para guardar el límite
-  ventanaSemanas: number = 4; // Valor por defecto
+  ventanaSemanas: number = 4;
+  mostrarModalRegistro = false; // Propiedad de tu amigo integrada
 
   constructor(
+    private route: ActivatedRoute, // Inyección tuya integrada
     private citasService: CitasService,
     private especialistaService: EspecialistaService,
     private pacienteService: PacienteService,
@@ -55,16 +59,21 @@ export class Agendamiento implements OnInit {
     this.filtroCalendario = this.filtroCalendario.bind(this);
   }
 
-  sugerencias: any[] = []; // Array para guardar los resultados temporales
-
-
   ngOnInit(): void {
     console.log('AGENDAMIENTO CARGADO');
     this.cargarEspecialistas();
     this.cargarConfiguracionGlobal();
+
+    // Lógica tuya integrada: Captura automática desde la ficha médica externa
+    this.route.queryParams.subscribe(params => {
+      const pacienteId = params['pacienteId'];
+      if (pacienteId) {
+        this.formData.cedula = pacienteId;
+        this.buscarPaciente();
+      }
+    });
   }
 
-  
   onInputBusqueda(event: any) {
     const query = event.target.value.trim();
     
@@ -83,7 +92,6 @@ export class Agendamiento implements OnInit {
     }
   }
 
-  // Al seleccionar, llenamos ambos campos
   seleccionarPaciente(paciente: any) {
     this.formData.cedula = paciente.documento;
     this.formData.nombre = `${paciente.nombres} ${paciente.apellidos}`;
@@ -113,23 +121,21 @@ export class Agendamiento implements OnInit {
   buscarPaciente() {
     const cedula = this.formData.cedula.trim();
 
-    // 1. Si está vacío, no hacemos nada y reseteamos
     if (!cedula) {
       this.pacienteEncontrado = null;
       this.formData.nombre = '';
       return;
     }
 
-    // 2. Llamada al servicio
     this.pacienteService.getPaciente(cedula).subscribe({
       next: (data) => {
         if (data) {
-          // ¡Éxito! Guardamos los datos
           this.pacienteEncontrado = data;
           this.formData.nombre = `${data.nombres} ${data.apellidos}`;
           Swal.close();
+          // Lógica tuya integrada: Carga disponibilidad inmediata si ya hay doctor pre-seleccionado
+          this.cargarDisponibilidad();
         } else {
-          // CASO: PACIENTE NO EXISTE
           this.manejarPacienteNoEncontrado();
         }
       },
@@ -139,6 +145,7 @@ export class Agendamiento implements OnInit {
       },
     });
   }
+
   private manejarPacienteNoEncontrado() {
     this.pacienteEncontrado = null;
     this.formData.nombre = '';
@@ -153,11 +160,9 @@ export class Agendamiento implements OnInit {
       });
     }
   }
-  limpiarFormulario() {
-    // 1. Reseteamos la bandera de validación
-    this.intentoEnvio = false;
 
-    // 2. Limpiamos los datos como ya lo hacías
+  limpiarFormulario() {
+    this.intentoEnvio = false;
     this.formData = {
       cedula: '',
       nombre: '',
@@ -168,7 +173,6 @@ export class Agendamiento implements OnInit {
     };
     this.pacienteEncontrado = null;
     this.horarios = [];
-
     console.log('Formulario reseteado y validaciones limpias.');
   }
 
@@ -178,16 +182,13 @@ export class Agendamiento implements OnInit {
 
     this.citasService.getDisponibilidad(especialistaid, fecha).subscribe({
       next: (data) => {
-        // Si hay datos, usamos los del back (citas ocupadas filtradas, etc.)
         if (data && data.length > 0) {
           this.horarios = data;
         } else {
-          // Si no hay datos (fecha pasada/no laborable), generamos su agenda real
           this.horarios = this.generarHorariosDesdeConfiguracion(especialistaid);
         }
       },
       error: () => {
-        // Ante error de red, también mostramos su agenda base para no bloquear
         this.horarios = this.generarHorariosDesdeConfiguracion(especialistaid);
       },
     });
@@ -195,11 +196,9 @@ export class Agendamiento implements OnInit {
 
   private generarHorariosDesdeConfiguracion(id: string): any[] {
     const doctor = this.especialistas.find((e) => e.id.toString() === id.toString());
-
     if (!doctor || !doctor.horarioAtencion) return [];
 
     const slots = [];
-    // Asegúrate de que horaInicio y horaFin existan
     const { horaInicio, horaFin } = doctor.horarioAtencion;
     if (!horaInicio || !horaFin) return [];
 
@@ -216,24 +215,20 @@ export class Agendamiento implements OnInit {
       slots.push({ hora: `${hh}:${mm}` });
       actual += intervalo;
     }
-
     return slots;
   }
 
   manejarCambioEspecialista(id: number) {
     this.formData.especialistaid = id.toString();
-    this.formData.fecha = ''; // Limpiamos fecha anterior para evitar inconsistencias
+    this.formData.fecha = ''; 
     this.horarios = [];
-
-    // Re-asignamos la función para forzar al hijo a detectar un cambio de @Input
     this.filtroCalendario = this.filtroCalendario.bind(this);
-
     this.cargarDisponibilidad();
   }
 
   actualizarFecha(nuevaFecha: string) {
     this.formData.fecha = nuevaFecha;
-    this.formData.hora = ''; // Resetear hora para obligar a elegir una del nuevo día
+    this.formData.hora = ''; 
     this.cargarDisponibilidad();
   }
 
@@ -272,14 +267,12 @@ export class Agendamiento implements OnInit {
 
     this.citasService.crearCita(dto).subscribe({
       next: () => {
-        /* ... success ... */
         Swal.fire({
           icon: 'success',
           title: '¡Cita Agendada!',
           text: `La cita para ${this.formData.nombre} ha sido registrada con éxito.`,
           confirmButtonColor: '#3b82f6',
         });
-
         this.limpiarFormulario();
       },
       error: (err) => {
@@ -287,11 +280,7 @@ export class Agendamiento implements OnInit {
           ? err.error.message.join('. ')
           : err.error?.message || 'Error de conexión';
 
-        // 1. Identificar si es error de "fecha pasada" (Rojito)
         const esFechaPasada = msg.toLowerCase().includes('pasado');
-
-        // 2. Identificar si es advertencia de agenda (Naranja)
-        // Por ejemplo: "No atiende los Jueves" o "Fuera de ventana"
         const esAdvertencia =
           msg.toLowerCase().includes('atiende') ||
           msg.toLowerCase().includes('ventana') ||
@@ -329,7 +318,6 @@ export class Agendamiento implements OnInit {
 
   getEdad(): string {
     if (!this.pacienteEncontrado?.fechaNacimiento) return '--';
-
     const nacimiento = new Date(this.pacienteEncontrado.fechaNacimiento);
     const hoy = new Date();
     let edad = hoy.getFullYear() - nacimiento.getFullYear();
@@ -338,6 +326,7 @@ export class Agendamiento implements OnInit {
     }
     return `${edad} años`;
   }
+
   cancelar() {
     Swal.fire({
       title: '¿Limpiar formulario?',
@@ -368,15 +357,8 @@ export class Agendamiento implements OnInit {
   }
 
   formatearDiasAtencion(diasBrutos: any): string {
-    // Cambiamos a any por si viene de un JSON inseguro
     if (!diasBrutos || !Array.isArray(diasBrutos)) return '';
-
-    const normalizar = (s: string) =>
-      s
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .toLowerCase();
-
+    const normalizar = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
     const diasLimpios = [
       ...new Set(
         diasBrutos.map((dia: string) => {
@@ -398,26 +380,21 @@ export class Agendamiento implements OnInit {
 
   filtroCalendario = (d: Date | null): boolean => {
     if (!d) return false;
-
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
 
-    // --- BLOQUEO 1: Pasado ---
     if (d < hoy) return false;
 
-    // --- BLOQUEO 2: Ventana de Semanas (NUEVO) ---
     const fechaLimite = new Date();
     fechaLimite.setDate(hoy.getDate() + (this.ventanaSemanas * 7));
     if (d > fechaLimite) return false;
 
-    // --- BLOQUEO 3: Festivos ---
     const anio = d.getFullYear();
     const mes = (d.getMonth() + 1).toString().padStart(2, '0');
     const dia = d.getDate().toString().padStart(2, '0');
     const stringFechaLocal = `${anio}-${mes}-${dia}`;
     if (this.festivosColombia.includes(stringFechaLocal)) return false;
 
-    // --- BLOQUEO 4: Agenda del Especialista ---
     return this.validarDiaEspecialista(d);
   };
 
@@ -426,26 +403,34 @@ export class Agendamiento implements OnInit {
     if (!idEsp) return false;
 
     const doctor = this.especialistas.find(e => e.id.toString() === idEsp.toString());
-
-    if (!doctor || !doctor.horarioAtencion?.diaSemana) {
-      console.warn('El doctor no tiene horario configurado:', doctor);
-      return true;
-    }
+    if (!doctor || !doctor.horarioAtencion?.diaSemana) return true;
 
     const diasMapa: { [key: number]: string } = {
       0: 'domingo', 1: 'lunes', 2: 'martes', 3: 'miercoles',
       4: 'jueves', 5: 'viernes', 6: 'sabado'
     };
-
     const diaNombreActual = diasMapa[fecha.getDay()];
-
-    // Normalizamos usando 'diaSemana'
     const diasConfigurados = doctor.horarioAtencion.diaSemana.map((d: string) =>
       d.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
     );
+    return diasConfigurados.includes(diaNombreActual);
+  }
 
-    const esValido = diasConfigurados.includes(diaNombreActual);
+  // Lógica de tu amigo integrada: Captura el evento del componente modal
+  manejarPacienteCreadoDesdeModal(paciente: any) {
+    this.mostrarModalRegistro = false;
+    this.formData.cedula = paciente.documento;
+    this.formData.nombre = `${paciente.nombres} ${paciente.apellidos}`;
+    this.pacienteEncontrado = paciente;
+    this.sugerencias = [];
 
-    return esValido;
+    Swal.fire({
+      icon: 'success',
+      title: '¡Paciente Registrado!',
+      text: `${paciente.nombres} ya está en la base de datos de Piedra Azul. Puede proceder a seleccionar el horario de la cita.`,
+      confirmButtonColor: '#2563EB',
+      timer: 3500,
+      timerProgressBar: true
+    });
   }
 }

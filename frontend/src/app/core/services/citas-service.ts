@@ -63,6 +63,10 @@ export class CitasService {
     let endpoint = '';
 
     switch (estado) {
+      case 'PROGRAMADA':
+        // Mapeamos PROGRAMADA al endpoint que el backend usa para revivir o limpiar citas
+        endpoint = 'reagendar'; 
+        break;
       case 'FINALIZADA':
         endpoint = 'finalizar';
         break;
@@ -77,7 +81,7 @@ export class CitasService {
         break;
       default:
         console.error('Estado no soportado:', estado);
-        return new Observable((sub) => sub.error('Estado no reconocido'));
+        return new Observable((sub) => sub.error({ error: { message: 'Estado no reconocido' } }));
     }
 
     // Se envía un objeto vacío {} como Body para evitar errores de protocolo en el PATCH

@@ -31,26 +31,33 @@ export class ReagendarCitaUseCase {
       data.estado,
     );
 
-    // No reagendar canceladas o finalizadas
-    if (
-      cita.estado === EstadoCita.CANCELADA ||
-      cita.estado === EstadoCita.FINALIZADA
-    ) {
-      throw new BadRequestException('No puedes reagendar esta cita');
+    // Identificamos si es una reversión por error (el usuario mantiene exactamente la misma fecha y hora original)
+    const esMismaFechaOriginal =
+      new Date(data.fechaHora).getTime() === new Date(nuevaFecha).getTime();
+
+    // Las validaciones de negocio estrictas solo se ejecutan si pretenden cambiar la fecha de verdad
+    if (!esMismaFechaOriginal) {
+      // No reagendar canceladas o finalizadas de forma ordinaria
+      if (
+        cita.estado === EstadoCita.CANCELADA ||
+        cita.estado === EstadoCita.FINALIZADA
+      ) {
+        throw new BadRequestException('No puedes reagendar esta cita');
+      }
+
+      // No permitir reprogramar al pasado
+      if (nuevaFecha < new Date()) {
+        throw new BadRequestException('No puedes reagendar al pasado');
+      }
+
+      // Validar horario comercial (8 a 18)
+      const hora = nuevaFecha.getHours();
+      if (hora < 8 || hora >= 18) {
+        throw new BadRequestException('Fuera del horario de atención');
+      }
     }
 
-    // No permitir pasado
-    if (nuevaFecha < new Date()) {
-      throw new BadRequestException('No puedes reagendar al pasado');
-    }
-
-    // Validar horario (8 a 18)
-    const hora = nuevaFecha.getHours();
-    if (hora < 8 || hora >= 18) {
-      throw new BadRequestException('Fuera del horario de atención');
-    }
-
-    // Traer citas del mismo día para validar solapamiento
+    // Traer citas del mismo día para validar solapamiento (Esta lógica se ejecuta siempre para evitar colisiones accidentales)
     const fecha = nuevaFecha.toISOString().split('T')[0];
     const citas = await this.citaRepository.buscarPorProfesionalYFecha(
       cita.especialistaId,
@@ -74,6 +81,7 @@ export class ReagendarCitaUseCase {
     }
 
     // --- AHORA SÍ FUNCIONARÁ ---
+    // Modifica internamente el estado de la cita de vuelta a PROGRAMADA (según tu método del dominio)
     cita.reagendar(nuevaFecha);
 
     await this.citaRepository.guardar(cita);
