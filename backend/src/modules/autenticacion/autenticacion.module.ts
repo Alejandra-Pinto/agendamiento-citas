@@ -27,6 +27,7 @@ import {
         // IMPORTANTE: Ahora que el Mapper pone los roles en la raíz del token,
         // le decimos a NestJS que los busque ahí.
         //roleSource: 'roles' as any,
+        excludePatterns: ['/health', '/metrics'],
       }),
       inject: [ConfigService],
     }),

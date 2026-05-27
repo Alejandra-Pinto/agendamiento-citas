@@ -11,6 +11,8 @@ import { AutenticacionModule } from './modules/autenticacion/autenticacion.modul
 import { HistoriaClinicaModule } from './modules/historia-clinica/historia-clinica.module';
 import { AuditoriaModule } from './modules/auditoria/auditoria.module';
 import { HealthModule } from './health/health.module';
+import { MetricsModule } from './metrics/metrics.module';
+import { MetricsPublicModule } from './metrics/metrics-public.module';
 
 @Module({
   imports: [
@@ -46,6 +48,8 @@ import { HealthModule } from './health/health.module';
     HistoriaClinicaModule,
     AuditoriaModule,
     HealthModule,
+    MetricsModule,
+    MetricsPublicModule,
   ],
   controllers: [AppController],
   providers: [AppService],
