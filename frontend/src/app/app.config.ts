@@ -1,8 +1,8 @@
-import { 
-  ApplicationConfig, 
-  LOCALE_ID, 
-  provideZoneChangeDetection, 
-  APP_INITIALIZER, 
+import {
+  ApplicationConfig,
+  LOCALE_ID,
+  provideZoneChangeDetection,
+  APP_INITIALIZER,
   importProvidersFrom
 } from '@angular/core';
 import { provideRouter } from '@angular/router';
@@ -23,7 +23,7 @@ export function initializeKeycloak(keycloak: KeycloakService) {
   return () =>
     keycloak.init({
       config: {
-        url: 'http://localhost:9090',
+        url: 'https://keycloak-clinica.onrender.com',
         realm: 'clinica-piedra-azul',
         clientId: 'frontend-clinica',
       },
@@ -41,8 +41,8 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
-    provideHttpClient(withInterceptorsFromDi()), 
-    
+    provideHttpClient(withInterceptorsFromDi()),
+
     // ESTO SUELE ARREGLAR EL ERROR NG0201
     importProvidersFrom(KeycloakAngularModule),
 
