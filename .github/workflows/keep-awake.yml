@@ -2,7 +2,6 @@ name: Keep Render Awake
 
 on:
   schedule:
-    # Cada 10 minutos
     - cron: "*/10 * * * *"
 
   workflow_dispatch:
@@ -12,5 +11,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Hacer ping al backend
+      - name: Ping Backend
         run: curl https://agendamiento-citas-gyw9.onrender.com/health
+
+      - name: Ping Keycloak
+        run: curl https://keycloak-clinica.onrender.com
