@@ -67,7 +67,7 @@ export class AsistenteComponent implements OnInit {
   cargarEspecialistas() {
     this.especialistaService.listarEspecialistas().subscribe((data) => {
       this.especialistas.set(data);
-      this.cargarHistorialPaciente(); // Cargamos el historial después de tener la lista de especialistas 
+      this.cargarHistorialPaciente(); // Cargamos el historial después de tener la lista de especialistas
     });
   }
 
@@ -117,7 +117,7 @@ export class AsistenteComponent implements OnInit {
   cargarConfiguracionGlobal() {
     this.adminService.obtenerConfiguracionGlobal().subscribe({
       next: (conf) => this.configuracionGlobal.set(conf),
-      error: () => console.error('No se pudo cargar la config global')
+      error: () => console.error('No se pudo cargar la config global'),
     });
   }
 
@@ -133,9 +133,8 @@ export class AsistenteComponent implements OnInit {
     const todos = this.especialistas();
 
     // Si no hay especialidad o es 'GENERAL', mostramos todos los doctores
-    const filtrados = (!esp || esp === 'GENERAL') 
-      ? todos 
-      : todos.filter((d) => d.especialidad === esp);
+    const filtrados =
+      !esp || esp === 'GENERAL' ? todos : todos.filter((d) => d.especialidad === esp);
 
     return filtrados.map((doc) => ({
       ...doc,
@@ -233,7 +232,6 @@ export class AsistenteComponent implements OnInit {
     const doc = this.doctorSeleccionado();
     const fecha = this.fechaSeleccionada();
     const hora = this.horaSeleccionada();
-    const especialidad = this.especialidadElegida();
 
     if (!perfil?.username || !doc || !fecha || !hora || !this.tipoCita()) {
       const mensaje = !this.tipoCita()
@@ -275,13 +273,26 @@ export class AsistenteComponent implements OnInit {
         const msg = Array.isArray(err.error?.message)
           ? err.error.message.join('. ')
           : err.error?.message || 'Error de conexión';
+
         const esFechaPasada = msg.toLowerCase().includes('pasado');
+
+        // DETECCIÓN DE LA NUEVA REGLA (Doble agendamiento el mismo día)
+        const esCitaDuplicadaDia = msg.toLowerCase().includes('ya cuenta con una cita');
+
         const esAdvertencia =
-          msg.toLowerCase().includes('atiende') || msg.toLowerCase().includes('ventana');
+          esCitaDuplicadaDia || // <-- Añadido al flujo de warnings
+          msg.toLowerCase().includes('atiende') ||
+          msg.toLowerCase().includes('ventana');
 
         Swal.fire({
           icon: esFechaPasada ? 'error' : esAdvertencia ? 'warning' : 'error',
-          title: esFechaPasada ? 'Fecha Inválida' : esAdvertencia ? 'Atención' : 'Error',
+          title: esFechaPasada
+            ? 'Fecha Inválida'
+            : esCitaDuplicadaDia
+              ? 'Límite Diario Superado'
+              : esAdvertencia
+                ? 'Atención'
+                : 'Error',
           text: msg,
           confirmButtonColor: esFechaPasada ? '#ef4444' : '#3b82f6',
         });
@@ -314,12 +325,25 @@ export class AsistenteComponent implements OnInit {
     this.intentoEnvio = false;
   }
 
-
   private festivosColombia = [
-    '2026-01-01', '2026-01-06', '2026-03-23', '2026-04-02', '2026-04-03',
-    '2026-05-01', '2026-05-18', '2026-06-08', '2026-06-15', '2026-06-29',
-    '2026-07-20', '2026-08-07', '2026-08-17', '2026-10-12', '2026-11-02',
-    '2026-11-16', '2026-12-08', '2026-12-25'
+    '2026-01-01',
+    '2026-01-06',
+    '2026-03-23',
+    '2026-04-02',
+    '2026-04-03',
+    '2026-05-01',
+    '2026-05-18',
+    '2026-06-08',
+    '2026-06-15',
+    '2026-06-29',
+    '2026-07-20',
+    '2026-08-07',
+    '2026-08-17',
+    '2026-10-12',
+    '2026-11-02',
+    '2026-11-16',
+    '2026-12-08',
+    '2026-12-25',
   ];
 
   filtroCalendario = (d: Date | null): boolean => {
@@ -335,7 +359,7 @@ export class AsistenteComponent implements OnInit {
     const config = this.configuracionGlobal();
     if (config?.ventanaHabilitacionSemanas) {
       const fechaLimite = new Date();
-      fechaLimite.setDate(hoy.getDate() + (config.ventanaHabilitacionSemanas * 7));
+      fechaLimite.setDate(hoy.getDate() + config.ventanaHabilitacionSemanas * 7);
       if (d > fechaLimite) return false;
     }
 
@@ -355,13 +379,21 @@ export class AsistenteComponent implements OnInit {
     if (!agenda || !agenda.horarioAtencion?.diaSemana) return true;
 
     const diasMapa: { [key: number]: string } = {
-      0: 'domingo', 1: 'lunes', 2: 'martes', 3: 'miercoles',
-      4: 'jueves', 5: 'viernes', 6: 'sabado'
+      0: 'domingo',
+      1: 'lunes',
+      2: 'martes',
+      3: 'miercoles',
+      4: 'jueves',
+      5: 'viernes',
+      6: 'sabado',
     };
 
     const diaNombreActual = diasMapa[fecha.getDay()];
     const diasConfigurados = agenda.horarioAtencion.diaSemana.map((d: string) =>
-      d.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      d
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, ''),
     );
 
     return diasConfigurados.includes(diaNombreActual);
