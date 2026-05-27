@@ -1,10 +1,13 @@
+/* eslint-disable prettier/prettier */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import {
   Injectable,
   Inject,
   NotFoundException,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
+
 import { HistoriaClinica } from '../../domain/entities/historia-clinica.entity';
 import type { HistoriaClinicaRepository } from '../../domain/repositories/historia-clinica.repository';
 import { CrearHistoriaDto } from '../dto/crear-historia.dto';
@@ -15,35 +18,82 @@ import type { PacientePort } from '../../domain/ports/paciente.port';
 
 @Injectable()
 export class CrearHistoriaUseCase {
+  private readonly logger = new Logger(
+    CrearHistoriaUseCase.name,
+  );
+
   constructor(
     @Inject('HistoriaClinicaRepository')
     private readonly repository: HistoriaClinicaRepository,
+
     @Inject('CitaPort')
     private readonly citaPort: CitaPort,
+
     @Inject('EspecialistaPort')
     private readonly especialistaPort: EspecialistaPort,
+
     @Inject('PacientePort')
     private readonly pacientePort: PacientePort,
   ) {}
 
-  async ejecutar(dto: CrearHistoriaDto): Promise<HistoriaClinica> {
-    const existeCita = await this.citaPort.obtenerPorId(dto.citaId);
-    if (!existeCita) {
-      throw new NotFoundException('La cita no existe');
-    }
+  async ejecutar(
+    dto: CrearHistoriaDto,
+  ): Promise<HistoriaClinica> {
 
-    const existeProfesional = await this.especialistaPort.obtenerPorId(
-      dto.especialistaId,
+    this.logger.log(
+      `Intentando crear historia clínica para cita ${dto.citaId}`,
     );
+
+    // Validar cita
+    const existeCita =
+      await this.citaPort.obtenerPorId(dto.citaId);
+
+    if (!existeCita) {
+
+      this.logger.warn(
+        `Cita no encontrada: ${dto.citaId}`,
+      );
+
+      throw new NotFoundException(
+        'La cita no existe',
+      );
+    }
+
+    // Validar especialista
+    const existeProfesional =
+      await this.especialistaPort.obtenerPorId(
+        dto.especialistaId,
+      );
+
     if (!existeProfesional) {
-      throw new BadRequestException('Especialista no válido');
+
+      this.logger.warn(
+        `Especialista inválido: ${dto.especialistaId}`,
+      );
+
+      throw new BadRequestException(
+        'Especialista no válido',
+      );
     }
 
-    const existePaciente = await this.pacientePort.obtenerPorId(dto.pacienteId);
+    // Validar paciente
+    const existePaciente =
+      await this.pacientePort.obtenerPorId(
+        dto.pacienteId,
+      );
+
     if (!existePaciente) {
-      throw new BadRequestException('Paciente no válido');
+
+      this.logger.warn(
+        `Paciente inválido: ${dto.pacienteId}`,
+      );
+
+      throw new BadRequestException(
+        'Paciente no válido',
+      );
     }
 
+    // Crear historia clínica
     const historia = new HistoriaClinica(
       randomUUID(),
       dto.citaId,
@@ -53,7 +103,16 @@ export class CrearHistoriaUseCase {
       dto.descripcion,
     );
 
+    this.logger.log(
+      `Historia clínica generada para paciente ${dto.pacienteId}`,
+    );
+
+    // Guardar
     await this.repository.guardar(historia);
+
+    this.logger.log(
+      `Historia clínica almacenada correctamente para cita ${dto.citaId}`,
+    );
 
     return historia;
   }
