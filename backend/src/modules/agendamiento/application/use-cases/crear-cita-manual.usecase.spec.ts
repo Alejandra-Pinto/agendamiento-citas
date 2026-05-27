@@ -51,9 +51,9 @@ describe('CrearCitaManualUseCase', () => {
     const fecha = new Date();
 
     // Buscar el próximo martes
-    while (fecha.getDay() !== 2) {
+    do {
       fecha.setDate(fecha.getDate() + 1);
-    }
+    } while (fecha.getDay() !== 2);
 
     // Asegurar una hora válida
     fecha.setHours(10, 0, 0, 0);
