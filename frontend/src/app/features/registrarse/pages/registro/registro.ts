@@ -73,14 +73,36 @@ export class RegistroPage implements OnInit {
     return pass === confirm ? null : { mismatch: true };
   }
 
-  // Helper para limpiar espacios y capitalizar (Primera Letra Mayúscula)
+  // Helper específico para remover tildes y diéresis protegiendo la Ñ / ñ
+  private removerTildesMantenerEnie(texto: string): string {
+    return texto
+      .normalize('NFD')
+      .replace(/(?<![nN])[\u0300-\u036f]/g, "")
+      .replace(/[áäàâ]/g, 'a')
+      .replace(/[éëèê]/g, 'e')
+      .replace(/[íïìî]/g, 'i')
+      .replace(/[óöòô]/g, 'o')
+      .replace(/[úüùû]/g, 'u')
+      .replace(/[ÁÄÀÂ]/g, 'A')
+      .replace(/[ÉËÈÊ]/g, 'E')
+      .replace(/[ÍÏÌÎ]/g, 'I')
+      .replace(/[ÓÖÒÔ]/g, 'O')
+      .replace(/[ÚÜÙÛ]/g, 'U');
+  }
+
+  // Helper para limpiar espacios, remover acentos y capitalizar (Primera Letra Mayúscula)
   private formatearTexto(texto: string): string {
     if (!texto) return '';
-    return texto
+    
+    // Primero removemos las tildes de forma segura
+    let textoSinTildes = this.removerTildesMantenerEnie(texto);
+
+    // Mantiene tu misma lógica de formateo y capitalización sobre la cadena limpia
+    return textoSinTildes
       .trim()                                      // Quita espacios al inicio y al final
       .replace(/\s+/g, ' ')                        // Une múltiples espacios intermedios en uno solo
       .toLowerCase()                               // Convierte todo a minúsculas provisionalmente
-      .replace(/(^\w|\s\w|ñ|á|é|í|ó|ú)/g, (m) => m.toUpperCase()); // Capitaliza la primera letra de cada palabra
+      .replace(/(^\w|\s\w|ñ)/g, (m) => m.toUpperCase()); // Capitaliza la primera letra de cada palabra
   }
 
   // Helper para mostrar errores en el HTML
