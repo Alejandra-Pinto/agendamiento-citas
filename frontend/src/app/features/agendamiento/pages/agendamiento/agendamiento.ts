@@ -74,22 +74,66 @@ export class Agendamiento implements OnInit {
     });
   }
 
+  // Helper privado para remover tildes y diacríticos de una cadena de texto
+  eliminarTildes(texto: string): string {
+  return texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
   onInputBusqueda(event: any) {
-    const query = event.target.value.trim();
-    
-    if (query.length >= 3) {
-      this.pacienteService.buscarSugerencias(query).subscribe({
-        next: (data) => {       
-          this.sugerencias = data ?? [];
-        },
-        error: (err) => {
-          console.error('Error al buscar sugerencias:', err);
-          this.sugerencias = [];
-        }
-      });
-    } else {
+    const rawQuery = event.target.value;
+
+    // 1. Limpieza base: minúsculas y sin tildes
+    let queryLimpiado = this.eliminarTildes(rawQuery).toLowerCase();
+
+    // Reemplazamos espacios múltiples intermedios por uno solo
+    queryLimpiado = queryLimpiado.replace(/\s+/g, ' ');
+
+    // 2. BLINDAJE DE CÉDULA: Creamos una versión sin ningún tipo de espacio para evaluar si es documento
+    const querySinEspacios = queryLimpiado.replace(/\s/g, '');
+
+    // Validación de longitud mínima (sobre la entrada real ignorando espacios huérfanos)
+    if (queryLimpiado.trim().length < 3) {
       this.sugerencias = [];
+      return;
     }
+
+    // Determinar si la búsqueda apunta a una Cédula o a un Nombre
+    const esNumerico = !isNaN(Number(querySinEspacios)) && querySinEspacios.length > 0;
+    
+    // ESTRATEGIA BACKEND: 
+    // Si es cédula, mandamos la query sin espacios.
+    const palabrasQuery = queryLimpiado.split(' ').filter(p => p.trim().length > 0);
+    const queryParaBackend = esNumerico ? querySinEspacios : queryLimpiado.trim();
+
+    this.pacienteService.buscarSugerencias(queryParaBackend).subscribe({
+      next: (data) => {
+        const resultados = data ?? [];
+
+        this.sugerencias = resultados.filter((paciente: any) => {
+          // Limpieza de datos del paciente de forma segura contra nulos
+          const nombres = this.eliminarTildes(paciente.nombres ?? '').toLowerCase();
+          const apellidos = this.eliminarTildes(paciente.apellidos ?? '').toLowerCase();
+          const infoPacienteCompleto = `${nombres} ${apellidos}`.replace(/\s+/g, ' ').trim();
+          
+          // Limpieza del documento del paciente eliminando CUALQUIER espacio no deseado de la BD
+          const cedulaPaciente = paciente.documento ? paciente.documento.toString().replace(/\s/g, '') : '';
+
+          // Si el usuario buscaba un número, contrastamos contra la cédula limpia
+          if (esNumerico) {
+            return cedulaPaciente.includes(querySinEspacios);
+          }
+
+          // Si el usuario buscaba texto, aplicamos el filtro multi-palabra local en el Front
+          return palabrasQuery.every(palabra =>
+            infoPacienteCompleto.includes(palabra)
+          );
+        });
+      },
+      error: (err) => {
+        console.error('Error al buscar sugerencias:', err);
+        this.sugerencias = [];
+      }
+    });
   }
 
   seleccionarPaciente(paciente: any) {
@@ -438,4 +482,6 @@ export class Agendamiento implements OnInit {
       timerProgressBar: true
     });
   }
+  
 }
+
