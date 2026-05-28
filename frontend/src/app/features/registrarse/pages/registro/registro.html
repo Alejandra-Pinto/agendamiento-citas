@@ -1,25 +1,25 @@
 <div [class]="modoAdministrativo 
-     ? 'w-full bg-white flex flex-col' 
-     : 'flex flex-col md:flex-row min-h-screen bg-surface'">
+      ? 'w-full bg-white flex flex-col' 
+      : 'flex flex-col md:flex-row min-h-screen bg-surface'">
 
   @if (!modoAdministrativo) {
     <app-branding-side class="hidden md:flex md:w-[35%] lg:w-[30%]"></app-branding-side>
   }
 
   <div [class]="modoAdministrativo 
-       ? 'w-full p-4 flex items-center justify-center' 
-       : 'flex-grow p-6 md:p-12 lg:p-16 flex items-center justify-center overflow-y-auto relative'">
+        ? 'w-full p-4 flex items-center justify-center' 
+        : 'flex-grow p-6 md:p-12 lg:p-16 flex items-center justify-center overflow-y-auto relative'">
     
     @if (!modoAdministrativo) {
-      <a href="http://localhost:4200" 
+      <a routerLink="/" 
          class="md:hidden absolute top-6 left-6 p-3 bg-white rounded-xl shadow-sm border border-slate-100 text-slate-400 active:scale-95 transition-all">
         <span class="material-symbols-outlined">home</span>
       </a>
     }
 
     <div [class]="modoAdministrativo 
-         ? 'w-full max-w-full bg-white' 
-         : 'w-full max-w-xl bg-white p-8 md:p-10 rounded-3xl shadow-xl border border-outline/30'">
+          ? 'w-full max-w-full bg-white' 
+          : 'w-full max-w-xl bg-white p-8 md:p-10 rounded-3xl shadow-xl border border-outline/30'">
       
       <div class="mb-6 text-center md:text-left">
         <h1 class="text-2xl font-extrabold text-slate-800 tracking-tight mb-1">
@@ -29,6 +29,26 @@
           {{ modoAdministrativo ? 'Ingrese los datos básicos del paciente para agendar la consulta.' : 'Regístrese para acceder a sus citas médicas en Piedra Azul.' }}
         </p>
       </div>
+
+      @if (errorMensaje) {
+        <div class="mb-4 bg-red-50 border-l-4 border-red-500 p-4 rounded-xl flex items-start gap-3 animate-fade-in">
+          <span class="material-symbols-outlined text-red-500 mt-0.5">error</span>
+          <div>
+            <h4 class="text-sm font-bold text-red-800 uppercase tracking-wide">No se pudo procesar</h4>
+            <p class="text-xs text-red-700 mt-0.5 font-medium">{{ errorMensaje }}</p>
+          </div>
+        </div>
+      }
+
+      @if (exitoMensaje) {
+        <div class="mb-4 bg-emerald-50 border-l-4 border-emerald-500 p-4 rounded-xl flex items-start gap-3 animate-fade-in">
+          <span class="material-symbols-outlined text-emerald-500 mt-0.5">check_circle</span>
+          <div>
+            <h4 class="text-sm font-bold text-emerald-800 uppercase tracking-wide">Registro Completado</h4>
+            <p class="text-xs text-emerald-700 mt-0.5 font-medium">{{ exitoMensaje }}</p>
+          </div>
+        </div>
+      }
 
       <form [formGroup]="registroForm" (ngSubmit)="onSubmit()" class="space-y-4">
         
