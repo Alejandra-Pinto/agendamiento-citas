@@ -19,6 +19,7 @@ export class RegistroPage implements OnInit {
 
   registroForm: FormGroup;
   errorMensaje: string | null = null;
+  exitoMensaje: string | null = null;
   cargando = false;
 
   // Signals para mostrar/ocultar contraseñas
@@ -129,6 +130,10 @@ export class RegistroPage implements OnInit {
   onSubmit() {
     if (this.registroForm.valid) {
       this.cargando = true;
+      // Limpiamos alertas previas antes de intentar una nueva petición
+      this.errorMensaje = null;
+      this.exitoMensaje = null;
+
       const rawValues = { ...this.registroForm.value };
 
       // Aplicamos la limpieza y formateo a los nombres y apellidos antes de enviar al backend
@@ -149,6 +154,9 @@ export class RegistroPage implements OnInit {
           if (!this.modoAdministrativo) {
             this.router.navigate(['/login']);
           } else {
+            // Mostramos feedback visual de éxito en modo administrativo antes de limpiar el formulario
+            this.exitoMensaje = `¡Paciente ${rawValues.nombres} registrado con éxito!`;
+            
             const datosPaciente = pacienteCreado || {
               nombres: rawValues.nombres,
               apellidos: rawValues.apellidos,
@@ -161,7 +169,11 @@ export class RegistroPage implements OnInit {
         },
         error: (err) => {
           this.cargando = false;
-          this.errorMensaje = err.error?.message || 'Error en el servidor';
+          // Captura el array de mensajes de NestJS (class-validator) o el mensaje simple de BadRequestException
+          const respuestaError = err.error?.message;
+          this.errorMensaje = Array.isArray(respuestaError) 
+            ? respuestaError[0] 
+            : (respuestaError || 'Error inesperado en el servidor');
         }
       });
     } else {
