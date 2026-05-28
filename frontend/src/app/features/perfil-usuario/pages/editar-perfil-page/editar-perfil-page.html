@@ -2,14 +2,15 @@
   <header class="w-full sticky top-0 z-50 bg-surface-container-low shadow-sm"></header>
 
   <main class="max-w-md mx-auto px-6 py-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-    <app-perfil-avatar
-      [nombreUsuario]="pacienteActual.nombres"
-      (alCambiarFoto)="procesarCambioFoto()"
-    >
-    </app-perfil-avatar>
+    <app-perfil-avatar [nombreUsuario]="pacienteActual.nombres"> </app-perfil-avatar>
 
     <div class="space-y-8">
-      <app-perfil-formulario [paciente]="pacienteActual"> </app-perfil-formulario>
+      <app-perfil-formulario
+        [paciente]="pacienteActual"
+        (onGuardarDatos)="guardarCambios()"
+        (onGuardarContrasena)="guardarCambios()"
+      >
+      </app-perfil-formulario>
 
       <button
         (click)="eliminarCuenta()"
