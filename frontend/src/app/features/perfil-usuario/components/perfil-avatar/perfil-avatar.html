@@ -1,0 +1,17 @@
+<section class="flex flex-col items-center mb-10">
+  <div class="relative group">
+    <div
+      class="w-32 h-32 rounded-full ring-4 ring-white shadow-xl flex items-center justify-center bg-blue-50 transition-colors"
+    >
+      <span class="text-blue-700 font-extrabold text-6xl uppercase select-none">
+        @if (nombreUsuario) {
+          {{
+            nombreUsuario.split(' ').length > 1 && nombreUsuario.toLowerCase().startsWith('dr')
+              ? nombreUsuario.split(' ')[1].charAt(0)
+              : nombreUsuario.charAt(0)
+          }}
+        }
+      </span>
+    </div>
+  </div>
+</section>

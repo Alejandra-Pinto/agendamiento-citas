@@ -46,13 +46,18 @@
 
     <div class="h-6 w-[1px] bg-slate-200 mx-1 md:mx-2"></div>
 
-    <div class="flex items-center gap-2 md:gap-3 cursor-pointer hover:bg-slate-50 p-1 md:pr-3 rounded-full transition-colors">
-      <div class="w-9 h-9 md:w-11 md:h-11 rounded-full flex-shrink-0 flex items-center justify-center border-2 border-blue-200 bg-blue-50 transition-colors">
-        <span class="text-blue-700 font-extrabold text-sm md:text-base uppercase select-none">
-          {{ 
-            username().split(' ').length > 1 && (username().toLowerCase().startsWith('dr')) 
-            ? username().split(' ')[1].charAt(0) 
-            : username().charAt(0) 
+    <div
+      routerLink="/perfil"
+      class="flex items-center gap-3 cursor-pointer hover:bg-slate-50 p-1 pr-3 rounded-full transition-colors"
+    >
+      <div
+        class="w-12 h-12 rounded-full flex-shrink-0 flex items-center justify-center border-2 border-blue-200 bg-blue-50 group-hover:bg-blue-100 transition-colors"
+      >
+        <span class="text-blue-700 font-extrabold text-lg uppercase select-none">
+          {{
+            username().split(' ').length > 1 && username().toLowerCase().startsWith('dr')
+              ? username().split(' ')[1].charAt(0)
+              : username().charAt(0)
           }}
         </span>
       </div>

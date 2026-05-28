@@ -3,11 +3,12 @@ import { Component, inject, computed, effect } from '@angular/core';
 import { AuthStateService } from '../../../core/services/auth-state.service';
 import { SidebarService } from '../../../core/services/sidebar.service'; // Asegúrate de la ruta correcta
 import { KeycloakService } from 'keycloak-angular';
+import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink],
   templateUrl: './header.html',
 })
 export class HeaderComponent {
@@ -24,7 +25,8 @@ export class HeaderComponent {
     const profile = this.keycloak.getKeycloakInstance().profile;
     return profile ? `${profile.firstName} ${profile.lastName}` : 'Usuario';
   });
-  
+
+  // Obtenemos el rol principal para mostrar bajo el nombre
   public mainRole = computed(() => {
     if (this.authService.isAdmin()) return 'Administrador';
     if (this.authService.isEspecialista()) return 'Especialista';

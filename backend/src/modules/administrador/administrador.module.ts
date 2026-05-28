@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AdministradorController } from './infrastructure/controllers/administrador.controller';
@@ -11,18 +12,28 @@ import { EspecialistaAgendaPort } from './domain/ports/especialista-agenda.port'
 import { EspecialistaAgendaAdapter } from './infrastructure/adapters/especialista-agenda.adapter';
 import { EspecialistaModule } from '../especialista/especialista.module';
 import { ConfiguracionRepository } from './domain/repositories/configuracion.repository';
+import { CalendarioOrmEntity } from './infrastructure/persistence/calendario.orm-entity';
+import { ConfigurarDiaClinicaUseCase } from './application/use-cases/configurar-dia-clinica.usecase';
+import { ObtenerCalendarioUseCase } from './application/use-cases/obtener-calendario.usecase';
+import { CalendarioClinicaService } from './domain/services/calendario-clinica.service';
+import { CalendarioRepository } from './domain/repositories/calendario.repository';
+import { CalendarioRepositoryImpl } from './infrastructure/persistence/calendario.repository.impl';
+import { CalendarioController } from './infrastructure/controllers/calendario.controller';
 
 @Module({
   imports: [
     EspecialistaModule,
-    TypeOrmModule.forFeature([ConfiguracionSistemaOrmEntity]),
+    TypeOrmModule.forFeature([CalendarioOrmEntity, ConfiguracionSistemaOrmEntity]),
   ],
-  controllers: [AdministradorController],
+  controllers: [CalendarioController, AdministradorController],
   providers: [
     ConfigurarAgendaUseCase,
     ObtenerAgendaEspecialistaUseCase,
     ObtenerConfiguracionSistemaUseCase,
     ConfigurarSistemaUseCase,
+    ConfigurarDiaClinicaUseCase,
+    ObtenerCalendarioUseCase,
+    CalendarioClinicaService,
     {
       provide: ConfiguracionRepository,
       useClass: AdministradorRepositoryImpl,
@@ -30,6 +41,10 @@ import { ConfiguracionRepository } from './domain/repositories/configuracion.rep
     {
       provide: EspecialistaAgendaPort,
       useClass: EspecialistaAgendaAdapter,
+    },
+    {
+      provide: CalendarioRepository,
+      useClass: CalendarioRepositoryImpl,
     },
   ],
   exports: [ConfiguracionRepository],
