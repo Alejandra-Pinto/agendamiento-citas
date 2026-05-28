@@ -1,6 +1,15 @@
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
-import { IsString, IsEnum, IsOptional, IsDate, IsEmail, MinLength, Matches } from 'class-validator';
-import { Type } from 'class-transformer';
+import {
+  IsString,
+  IsEnum,
+  IsOptional,
+  IsDate,
+  IsEmail,
+  MinLength,
+  Matches,
+} from 'class-validator';
+import { Type, Transform } from 'class-transformer';
 import { GeneroEnum } from '../../domain/entities/paciente.entity';
 import { Exclude } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -70,6 +79,7 @@ export class CrearPacienteDto {
     example: 'correo@email.com',
     description: 'Correo electrónico',
   })
+  @Transform(({ value }) => (value === '' ? undefined : value)) // <--- Línea mágica
   @IsOptional()
   @IsEmail()
   email?: string;

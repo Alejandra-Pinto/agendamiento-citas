@@ -65,14 +65,37 @@ export class PacienteRepositoryImpl implements PacienteRepository {
   }
 
   async buscarPorTermino(query: string): Promise<Paciente[]> {
-    const entities = await this.repo.find({
-      where: [
-        { documento: ILike(`%${query}%`) },
-        { nombres: ILike(`%${query}%`) },
-        { apellidos: ILike(`%${query}%`) },
-      ],
-      take: 5, // Limitamos a 5 para que el autocompletado sea rápido
+    // 1. Limpieza inicial: quitamos espacios dobles y extremos
+    const queryLimpia = query.replace(/\s+/g, ' ').trim();
+
+    // 2. Si la query es un número puro (cédula), usamos la búsqueda directa por repositorio
+    const querySinEspacios = queryLimpia.replace(/\s/g, '');
+    if (!isNaN(Number(querySinEspacios)) && querySinEspacios.length > 0) {
+      const entities = await this.repo.find({
+        where: { documento: ILike(`%${querySinEspacios}%`) },
+        take: 5,
+      });
+      return entities.map((e) => this.toDomain(e));
+    }
+
+    // 3. Si es texto, dividimos por palabras para la búsqueda inteligente
+    const palabras = queryLimpia.split(' ').filter((p) => p.length > 0);
+
+    // 'paciente' es el alias que usaremos en la consulta SQL
+    const queryBuilder = this.repo.createQueryBuilder('paciente');
+
+    // Para cada palabra, exigimos que esté en nombres O en apellidos
+    palabras.forEach((palabra, index) => {
+      queryBuilder.andWhere(
+        `(paciente.nombres ILIKE :p${index} OR paciente.apellidos ILIKE :p${index})`,
+        { [`p${index}`]: `%${palabra}%` },
+      );
     });
+
+    // IMPORTANTE: En el QueryBuilder de TypeORM, se usa 'take' para paginación segura,
+    // pero requiere que los resultados se obtengan con 'getMany()'
+    const entities = await queryBuilder.take(5).getMany();
+
     return entities.map((e) => this.toDomain(e));
   }
 
