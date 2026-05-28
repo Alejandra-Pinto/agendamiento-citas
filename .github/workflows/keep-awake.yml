@@ -12,7 +12,7 @@ jobs:
 
     steps:
       - name: Ping Backend
-        run: curl https://agendamiento-citas-gyw9.onrender.com/health
+        run: curl -I https://agendamiento-citas-gyw9.onrender.com/health
 
       - name: Ping Keycloak
-        run: curl https://keycloak-clinica.onrender.com
+        run: curl -I https://keycloak-clinica.onrender.com
