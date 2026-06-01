@@ -49,7 +49,7 @@ export class PacienteController {
   }
 
   @Get(':documento')
-  @Roles({ roles: ['ADMIN', 'ESPECIALISTA', 'PACIENTE'] })
+  @Unprotected() // Permite acceso sin token, necesario para la validación de documento en el frontend
   @ApiOperation({ summary: 'Buscar paciente por documento' })
   @ApiParam({
     name: 'documento',

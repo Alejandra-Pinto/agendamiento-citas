@@ -127,7 +127,7 @@
         }
 
         <div class="pt-2 text-center space-y-4">
-          <button [disabled]="registroForm.invalid || cargando" class="btn-principal w-full">
+          <button [disabled]="registroForm.invalid || registroForm.pending || cargando" class="btn-principal w-full">
             {{ cargando ? 'REGISTRANDO...' : (modoAdministrativo ? 'REGISTRAR PACIENTE' : 'CREAR MI EXPEDIENTE') }}
             <span class="material-symbols-outlined">how_to_reg</span>
           </button>
