@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 import { ReagendarCitaUseCase } from './reagendar-cita.usecase';
@@ -25,19 +26,28 @@ describe('ReagendarCitaUseCase', () => {
       20,
       TipoCita.CONTROL,
     );
+
+    // Fecha futura base
+    const fechaBase = new Date();
+    fechaBase.setDate(fechaBase.getDate() + 7);
+    fechaBase.setHours(10, 0, 0, 0);
+
     const otraCita = new Cita(
       '2',
       'p2',
       'e1',
-      new Date('2026-06-01T10:00:00'),
+      fechaBase,
       20,
       TipoCita.CONTROL,
     );
 
+    // Choca con la cita anterior (10:00 - 10:20)
+    const nuevaFecha = new Date(fechaBase);
+    nuevaFecha.setMinutes(10);
+
     mockRepo.buscarPorId.mockResolvedValue(citaExistente);
     mockRepo.buscarPorProfesionalYFecha.mockResolvedValue([otraCita]);
 
-    const nuevaFecha = new Date('2026-06-01T10:10:00'); // Choca con la cita de las 10:00
     await expect(useCase.ejecutar('1', nuevaFecha)).rejects.toThrow(
       'Horario no disponible',
     );
