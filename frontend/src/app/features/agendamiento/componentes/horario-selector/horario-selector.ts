@@ -41,6 +41,10 @@ export class HorarioSelectorComponent {
     this.horaChange.emit(nuevaHora);
   }
 
+  ngOnChanges() {
+    console.log('fecha input:', this.fecha);
+  }
+
   convertirHora(hora: string): string {
     // Convierte "08:15 AM" → "08:15"
     const [time, modifier] = hora.split(' ');
