@@ -17,9 +17,16 @@ export class AgendamientoInfoMedico {
     if (!this.citaInfo?.fechaHora) return '';
 
     const inicio = new Date(this.citaInfo.fechaHora);
-    const fin = new Date(inicio.getTime() + (this.citaInfo.duracion || 30) * 60000);
+    const fin = new Date(
+      inicio.getTime() + (this.citaInfo.duracion || 30) * 60000,
+    );
 
-    const opciones: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-digit' };
-    return `${inicio.toLocaleTimeString([], opciones)} - ${fin.toLocaleTimeString([], opciones)}`;
+    const horaInicio = inicio.getUTCHours().toString().padStart(2, '0');
+    const minInicio = inicio.getUTCMinutes().toString().padStart(2, '0');
+
+    const horaFin = fin.getUTCHours().toString().padStart(2, '0');
+    const minFin = fin.getUTCMinutes().toString().padStart(2, '0');
+
+    return `${horaInicio}:${minInicio} - ${horaFin}:${minFin}`;
   }
 }
