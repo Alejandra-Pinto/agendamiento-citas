@@ -19,7 +19,7 @@
       ID: {{ citaInfo.paciente?.documento }}
     </p>
   </div>
-  
+
   <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-primary">
     <div class="flex items-start justify-between mb-4">
       <span class="bg-primary/10 text-primary p-3 rounded-xl">
@@ -65,7 +65,7 @@
       class="text-xs font-bold text-slate-400 uppercase mb-1 tracking-wide">Fecha
       de Cita</h4>
     <p class="text-lg font-extrabold text-on-surface mb-4">
-      {{ citaInfo.fechaHora | date: 'fullDate' | titlecase }}
+      {{ citaInfo.fechaHora | date: 'fullDate':'UTC' | titlecase }}
     </p>
 
     <h4 class="text-xs font-bold text-slate-400 uppercase mb-1 tracking-wide">
