@@ -1,15 +1,12 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import {
   KeycloakConnectModule,
-  //ResourceGuard,
   RoleGuard,
   AuthGuard,
-  PolicyEnforcementMode, // <-- Agregar esta importación
-  TokenValidation, // <-- Agregar esta importación
+  PolicyEnforcementMode,
+  TokenValidation,
 } from 'nest-keycloak-connect';
 
 @Module({
@@ -21,20 +18,27 @@ import {
         realm: config.get<string>('KEYCLOAK_REALM')!,
         clientId: config.get<string>('KEYCLOAK_CLIENT_ID')!,
         secret: config.get<string>('KEYCLOAK_SECRET') || '',
-        policyEnforcement: PolicyEnforcementMode.PERMISSIVE,
+
+        // STRICT: si el token falla, se rechaza.
+        policyEnforcement: PolicyEnforcementMode.ENFORCING,
+
         tokenValidation: TokenValidation.OFFLINE,
 
-        // IMPORTANTE: Ahora que el Mapper pone los roles en la raíz del token,
-        // le decimos a NestJS que los busque ahí.
-        //roleSource: 'roles' as any,
-        excludePatterns: ['/health', '/metrics'],
+        excludePatterns: [
+          '/health',
+          '/metrics',
+          '/metrics-public',
+          // La ruta de disponibilidad es pública (pacientes sin login la consultan)
+          { url: '/citas/disponibilidad', method: 'GET' },
+        ],
       }),
       inject: [ConfigService],
     }),
   ],
   providers: [
+    // AuthGuard primero: verifica que el token sea válido
     { provide: APP_GUARD, useClass: AuthGuard },
-    //{ provide: APP_GUARD, useClass: ResourceGuard },
+    // RoleGuard segundo: verifica que el rol sea el requerido
     { provide: APP_GUARD, useClass: RoleGuard },
   ],
 })

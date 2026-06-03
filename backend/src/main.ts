@@ -1,38 +1,56 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
 import { GlobalExceptionFilter } from './common/filters/http-exception.filter';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, {
-    //logger: WinstonModule.createLogger(winstonConfig),
-  });
+  const app = await NestFactory.create(AppModule);
 
-  // ACTIVAR VALIDACIÓN GLOBAL PARA TODOS LOS DTOs
   app.useGlobalPipes(
     new ValidationPipe({
-      transform: true, // convierte JSON → DTO real
-      whitelist: true, // elimina campos que no están en el DTO
-      forbidNonWhitelisted: true, // lanza error si mandan campos extra
+      transform: true,
+      whitelist: true,
+      forbidNonWhitelisted: true,
     }),
   );
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
   app.getHttpAdapter().getInstance().disable('x-powered-by');
 
+  // Headers de seguridad
   app.use((req, res, next) => {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('X-XSS-Protection', '1; mode=block');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    res.setHeader(
+      'Strict-Transport-Security',
+      'max-age=31536000; includeSubDomains',
+    );
     next();
   });
 
+  // CORS: origin explícito, no wildcard con credentials
+  const allowedOrigins = (
+    process.env.ALLOWED_ORIGINS ?? 'http://localhost:4200'
+  )
+    .split(',')
+    .map((o) => o.trim());
+
   app.enableCors({
-    origin: '*',
-    methods: 'GET,PATCH,POST,PUT,DELETE',
+    origin: (origin, callback) => {
+      // Permite requests sin origin (ej: Postman, server-to-server)
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error(`Origin no permitido: ${origin}`));
+      }
+    },
+    methods: ['GET', 'PATCH', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
   });
 
@@ -42,6 +60,7 @@ async function bootstrap() {
     .setTitle('API Piedra Azul')
     .setDescription('API para gestión de citas médicas')
     .setVersion('1.0')
+    .addBearerAuth() // Swagger también soporta el token
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

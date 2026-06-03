@@ -3,22 +3,26 @@ import {
   LOCALE_ID,
   provideZoneChangeDetection,
   APP_INITIALIZER,
-  importProvidersFrom
+  importProvidersFrom,
 } from '@angular/core';
 import { provideRouter } from '@angular/router';
-import { provideHttpClient, withInterceptorsFromDi, HTTP_INTERCEPTORS } from '@angular/common/http';
+import {
+  provideHttpClient,
+  withInterceptorsFromDi,
+  HTTP_INTERCEPTORS,
+} from '@angular/common/http';
 import { routes } from './app.routes';
-
-// Keycloak
-import { KeycloakAngularModule, KeycloakService, KeycloakBearerInterceptor } from 'keycloak-angular';
-
-// Idioma
+import {
+  KeycloakAngularModule,
+  KeycloakService,
+  KeycloakBearerInterceptor,
+} from 'keycloak-angular';
 import { registerLocaleData } from '@angular/common';
 import localeEs from '@angular/common/locales/es';
+import { TokenRefreshInterceptor } from './core/interceptors/token-refresh.interceptor';
 
 registerLocaleData(localeEs, 'es-ES');
 
-// 1. Definimos la función de inicialización ANTES del objeto de configuración
 export function initializeKeycloak(keycloak: KeycloakService) {
   return () =>
     keycloak.init({
@@ -28,12 +32,16 @@ export function initializeKeycloak(keycloak: KeycloakService) {
         clientId: 'frontend-clinica',
       },
       initOptions: {
-        onLoad: 'check-sso', // <--- Cambiado de 'login-required' a 'check-sso'
-        silentCheckSsoRedirectUri: window.location.origin + '/assets/silent-check-sso.html', 
-        checkLoginIframe: false
+        onLoad: 'check-sso',
+        checkLoginIframe: false,
+        pkceMethod: 'S256',
       },
       enableBearerInterceptor: true,
       bearerPrefix: 'Bearer',
+      bearerExcludedUrls: [
+        '/assets',
+        'https://keycloak-clinica.onrender.com',
+      ],
     });
 }
 
@@ -42,11 +50,8 @@ export const appConfig: ApplicationConfig = {
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
     provideHttpClient(withInterceptorsFromDi()),
-
-    // ESTO SUELE ARREGLAR EL ERROR NG0201
     importProvidersFrom(KeycloakAngularModule),
 
-    // Luego el inicializador
     {
       provide: APP_INITIALIZER,
       useFactory: initializeKeycloak,
@@ -54,7 +59,12 @@ export const appConfig: ApplicationConfig = {
       deps: [KeycloakService],
     },
 
-    // Finalmente los interceptores
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: TokenRefreshInterceptor,
+      multi: true,
+    },
+
     {
       provide: HTTP_INTERCEPTORS,
       useClass: KeycloakBearerInterceptor,
