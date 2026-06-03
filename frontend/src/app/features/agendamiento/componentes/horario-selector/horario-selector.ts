@@ -24,10 +24,15 @@ export class HorarioSelectorComponent {
 
 
   onFechaChange(event: any) {
-
-    // El datepicker de Material devuelve un objeto Date, lo convertimos a string YYYY-MM-DD
     if (event.value) {
-      const fechaSeleccionada = event.value.toISOString().split('T')[0];
+      const fecha = event.value as Date;
+
+      const year = fecha.getFullYear();
+      const month = String(fecha.getMonth() + 1).padStart(2, '0');
+      const day = String(fecha.getDate()).padStart(2, '0');
+
+      const fechaSeleccionada = `${year}-${month}-${day}`;
+
       this.fechaChange.emit(fechaSeleccionada);
     }
   }
