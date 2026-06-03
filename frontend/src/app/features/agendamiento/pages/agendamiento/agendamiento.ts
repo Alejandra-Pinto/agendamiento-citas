@@ -99,8 +99,8 @@ export class Agendamiento implements OnInit {
 
     // Determinar si la búsqueda apunta a una Cédula o a un Nombre
     const esNumerico = !isNaN(Number(querySinEspacios)) && querySinEspacios.length > 0;
-    
-    // ESTRATEGIA BACKEND: 
+
+    // ESTRATEGIA BACKEND:
     // Si es cédula, mandamos la query sin espacios.
     const palabrasQuery = queryLimpiado.split(' ').filter(p => p.trim().length > 0);
     const queryParaBackend = esNumerico ? querySinEspacios : queryLimpiado.trim();
@@ -114,7 +114,7 @@ export class Agendamiento implements OnInit {
           const nombres = this.eliminarTildes(paciente.nombres ?? '').toLowerCase();
           const apellidos = this.eliminarTildes(paciente.apellidos ?? '').toLowerCase();
           const infoPacienteCompleto = `${nombres} ${apellidos}`.replace(/\s+/g, ' ').trim();
-          
+
           // Limpieza del documento del paciente eliminando CUALQUIER espacio no deseado de la BD
           const cedulaPaciente = paciente.documento ? paciente.documento.toString().replace(/\s/g, '') : '';
 
@@ -264,15 +264,17 @@ export class Agendamiento implements OnInit {
 
   manejarCambioEspecialista(id: number) {
     this.formData.especialistaid = id.toString();
-    this.formData.fecha = ''; 
+    this.formData.fecha = '';
     this.horarios = [];
     this.filtroCalendario = this.filtroCalendario.bind(this);
     this.cargarDisponibilidad();
   }
 
   actualizarFecha(nuevaFecha: string) {
+    console.log('Fecha recibida:', nuevaFecha);
+
     this.formData.fecha = nuevaFecha;
-    this.formData.hora = ''; 
+    this.formData.hora = '';
     this.cargarDisponibilidad();
   }
 
@@ -325,7 +327,7 @@ export class Agendamiento implements OnInit {
           : err.error?.message || 'Error de conexión';
 
         const esFechaPasada = msg.toLowerCase().includes('pasado');
-        
+
         // DETECCIÓN DE LA NUEVA REGLA DE NEGOCIO (Doble cita el mismo día)
         const esCitaDuplicadaDia = msg.toLowerCase().includes('ya cuenta con una cita');
 
@@ -482,6 +484,6 @@ export class Agendamiento implements OnInit {
       timerProgressBar: true
     });
   }
-  
+
 }
 
