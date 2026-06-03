@@ -1,16 +1,17 @@
-<div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-8">
+<div
+  class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-8">
   <div>
-    <h2 class="text-3xl font-black tracking-tight text-on-surface mb-2">Detalle de la Cita</h2>
+    <h2 class="text-3xl font-black tracking-tight text-on-surface mb-2">Detalle
+      de la Cita</h2>
     <p class="text-slate-500 font-medium">
       Gestiona y consulta la información detallada del paciente.
     </p>
   </div>
 
   <div class="flex flex-wrap items-center gap-3">
-    
-    <button 
+
+    <button
       (click)="reagendarPaciente()"
-      [disabled]="estadoActual === 'FINALIZADA'"
       class="px-4 py-2 bg-green-600 hover:bg-green-500 text-white text-xs font-black rounded-lg shadow-sm flex items-center gap-2 transition-all h-[38px] tracking-wider disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-green-600">
       <span class="material-symbols-outlined text-sm">calendar_add_on</span>
       REAGENDAR
@@ -29,8 +30,9 @@
         <span class="material-symbols-outlined text-sm">edit</span>
         CAMBIAR ESTADO
       </button>
-      
-      <div class="absolute right-0 mt-2 w-48 bg-white shadow-xl rounded-xl p-2 border border-slate-100 hidden group-hover:block z-50">
+
+      <div
+        class="absolute right-0 mt-2 w-48 bg-white shadow-xl rounded-xl p-2 border border-slate-100 hidden group-hover:block z-50">
         <div
           (click)="intentarCambioEstado('PROGRAMADA')"
           class="p-2 hover:bg-blue-50 rounded-lg cursor-pointer flex items-center gap-3 text-xs font-bold text-blue-600">
