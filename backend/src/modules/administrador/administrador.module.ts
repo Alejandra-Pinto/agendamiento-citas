@@ -19,6 +19,8 @@ import { CalendarioClinicaService } from './domain/services/calendario-clinica.s
 import { CalendarioRepository } from './domain/repositories/calendario.repository';
 import { CalendarioRepositoryImpl } from './infrastructure/persistence/calendario.repository.impl';
 import { CalendarioController } from './infrastructure/controllers/calendario.controller';
+import { HorarioGeneralService } from './domain/services/horario-general.service';
+import { ObtenerHorarioGeneralUseCase } from './application/use-cases/obtener-horario-general.usecase';
 
 @Module({
   imports: [
@@ -33,7 +35,9 @@ import { CalendarioController } from './infrastructure/controllers/calendario.co
     ConfigurarSistemaUseCase,
     ConfigurarDiaClinicaUseCase,
     ObtenerCalendarioUseCase,
+    ObtenerHorarioGeneralUseCase,
     CalendarioClinicaService,
+    HorarioGeneralService,
     {
       provide: ConfiguracionRepository,
       useClass: AdministradorRepositoryImpl,

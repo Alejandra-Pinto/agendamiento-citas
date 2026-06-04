@@ -15,6 +15,8 @@ import { ObtenerConfiguracionSistemaUseCase } from '../../application/use-cases/
 import { CrearConfiguracionDto } from '../../application/dto/crear-configuracion.dto';
 import { ActualizarReglasGlobalesDto } from '../../application/dto/actualizar-reglas-globales.dto';
 import { Roles } from 'nest-keycloak-connect';
+import { Public } from 'nest-keycloak-connect';
+import { ObtenerHorarioGeneralUseCase } from '../../application/use-cases/obtener-horario-general.usecase';
 
 @ApiTags('administrador')
 @Controller('administrador')
@@ -23,6 +25,7 @@ export class AdministradorController {
     private readonly configurarAgendaUC: ConfigurarAgendaUseCase,
     private readonly actualizarGlobalUC: ConfigurarSistemaUseCase,
     private readonly obtenerAgendaUC: ObtenerAgendaEspecialistaUseCase,
+    private readonly obtenerHorarioGeneralUseCase: ObtenerHorarioGeneralUseCase,
     private readonly obtenerGlobalUC: ObtenerConfiguracionSistemaUseCase,
   ) {}
 
@@ -84,5 +87,11 @@ export class AdministradorController {
     return await this.actualizarGlobalUC.execute(
       dto.ventanaHabilitacionSemanas,
     );
+  }
+
+  @Get('horario-general')
+  @Public()
+  obtenerHorarioGeneral() {
+    return this.obtenerHorarioGeneralUseCase.execute();
   }
 }

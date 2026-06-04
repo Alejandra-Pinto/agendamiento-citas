@@ -48,7 +48,7 @@ export class TokenRefreshInterceptor implements HttpInterceptor {
   }
 
   private isPublicUrl(url: string): boolean {
-    const publicPatterns = ['/assets', 'keycloak-clinica.onrender.com'];
+    const publicPatterns = ['/assets', '/administrador/horario-general', 'keycloak-clinica.onrender.com'];
     return publicPatterns.some((pattern) => url.includes(pattern));
   }
 }
