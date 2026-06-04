@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 import { Inject, Injectable } from '@nestjs/common';
 import {
   EspecialistaAgendaPort,
@@ -35,5 +36,11 @@ export class EspecialistaAgendaAdapter implements EspecialistaAgendaPort {
     horario: HorarioData,
   ): Promise<void> {
     await this.configurarUseCase.execute(id, intervalo, horario);
+  }
+
+  async obtenerTodasLasAgendas(): Promise<HorarioData[]> {
+    const especialistas = await this.especialistaRepo.findAll();
+
+    return especialistas.map((e) => e.horarioAtencion).filter((h) => h != null);
   }
 }

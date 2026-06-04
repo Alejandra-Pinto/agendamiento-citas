@@ -20,4 +20,5 @@ export abstract class EspecialistaAgendaPort {
     intervalo: number,
     horario: HorarioData,
   ): Promise<void>;
+  abstract obtenerTodasLasAgendas(): Promise<HorarioData[]>;
 }

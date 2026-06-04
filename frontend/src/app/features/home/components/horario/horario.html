@@ -12,7 +12,10 @@
         <div class="flex flex-col">
           <h4 class="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Horario de Atención</h4>
           <p class="text-slate-800 text-lg font-medium m-0">
-            Lunes a Sábado: <span class="text-[#1D4ED8] font-bold tracking-tight">8:00 AM — 6:00 PM</span>
+            Horario general:
+            <span class="text-[#1D4ED8] font-bold tracking-tight">
+              {{ horarioResumen?.horaInicio }} — {{ horarioResumen?.horaFin }}
+            </span>
           </p>
         </div>
       </div>
