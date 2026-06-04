@@ -1,12 +1,12 @@
 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
   <div class="space-y-2">
     <label class="text-[10px] uppercase tracking-widest font-bold text-slate-500">Fecha de Cita*</label>
-    
+
     <mat-form-field appearance="outline" class="w-full custom-datepicker">
-      <input matInput 
-             [matDatepicker]="picker" 
+      <input matInput
+             [matDatepicker]="picker"
              [matDatepickerFilter]="filtroFechas"
-             [(ngModel)]="fecha"
+             [(ngModel)]="fechaDate"
              (dateChange)="onFechaChange($event)"
              placeholder="Seleccione una fecha">
       <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>

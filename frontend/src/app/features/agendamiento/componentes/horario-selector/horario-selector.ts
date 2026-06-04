@@ -22,6 +22,7 @@ export class HorarioSelectorComponent {
   @Output() fechaChange = new EventEmitter<string>();
   @Output() horaChange = new EventEmitter<string>();
 
+  fechaDate: Date | null = null;
 
   onFechaChange(event: any) {
     if (event.value) {
@@ -42,7 +43,15 @@ export class HorarioSelectorComponent {
   }
 
   ngOnChanges() {
-    console.log('fecha input:', this.fecha);
+    if (this.fecha) {
+      const [year, month, day] = this.fecha.split('-').map(Number);
+
+      this.fechaDate = new Date(
+        year,
+        month - 1,
+        day
+      );
+    }
   }
 
   convertirHora(hora: string): string {
