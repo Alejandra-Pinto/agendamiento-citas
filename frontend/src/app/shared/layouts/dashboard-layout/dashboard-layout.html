@@ -1,15 +1,12 @@
 <div class="flex h-screen overflow-hidden bg-slate-50">
   
-  <app-sidebar class="fixed inset-y-0 left-0 z-50 md:relative md:block"></app-sidebar> 
+  <app-sidebar></app-sidebar>
   
-  <div class="flex-1 flex flex-col h-full overflow-hidden"> 
-    
+  <div class="flex-1 flex flex-col h-full overflow-hidden min-w-0"> 
     <app-header></app-header>
-
     <main class="flex-1 overflow-y-auto">
       <router-outlet></router-outlet>
       <app-footer></app-footer>
     </main>
-
   </div>
 </div>
